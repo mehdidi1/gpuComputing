@@ -1,0 +1,61 @@
+1. Convolution
+
+Appliquer des filtres sur l’image
+
+Produit scalaire local
+
+2. Activation
+
+Fonction non linéaire (souvent ReLU)
+
+3. Pooling
+
+Réduction de dimension (max / average)
+
+4. Flatten
+
+Transformer la matrice en vecteur
+
+5. Fully Connected
+
+Multiplication matrice-vecteur
+
+6. Softmax
+
+Probabilités de sortie
+
+
+LES SIGNATURES
+
+struct Tensor {
+    int width;
+    int height;
+    int depth;     // nombre de canaux
+    float* data;   // allocation dynamique
+};
+
+Tensor convolution2D(
+    const Tensor& input,
+    const Tensor& kernels,   // [num_kernels][kH][kW][depth]
+    const float* bias,
+    int stride,
+    int padding
+);
+
+void relu(Tensor& input);
+Tensor maxPooling(
+    const Tensor& input,
+    int poolSize,
+    int stride
+);
+float* flatten(const Tensor& input, int& outputSize);
+float* fullyConnected(
+    const float* input,
+    int inputSize,
+    const float* weights,   // [outputSize][inputSize]
+    const float* bias,
+    int outputSize
+);
+void softmax(float* input, int size);
+float* cnnForwardSequential(const Tensor& inputImage);
+
