@@ -32,5 +32,6 @@ public:
      */
     void forward(const Tensor& input, Tensor& output) override;
     
+    std::vector<int> get_output_shape(const std::vector<int>& input_shape) const override;
 
 };

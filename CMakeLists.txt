@@ -130,6 +130,11 @@ add_executable(test_activation tests/test_activation.cpp)
 target_link_libraries(test_activation PRIVATE cnn_core)
 add_test(NAME ActivationTest COMMAND test_activation)
 
+# Flatten layer unit tests
+add_executable(test_flatten tests/test_flatten.cpp)
+target_link_libraries(test_flatten PRIVATE cnn_core)
+add_test(NAME FlattenTest COMMAND test_flatten)
+
 # Additional tests can be added later
 # add_executable(test_layers tests/test_layers.cpp)
 # target_link_libraries(test_layers PRIVATE cnn_core)

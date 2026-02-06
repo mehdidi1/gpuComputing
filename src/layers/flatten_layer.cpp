@@ -6,6 +6,7 @@
 // 
 
 #include "layers/flatten_layer.h"
+#include <stdexcept>
 
 FlattenLayer::FlattenLayer() {}
 
