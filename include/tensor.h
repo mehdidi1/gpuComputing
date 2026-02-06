@@ -96,6 +96,7 @@ public:
     /// Get raw pointer to data (const)
     const float* data() const { return data_.get(); }
     
+    
     // ========================================================================
     // ELEMENT ACCESS (4D indexing)
     // ========================================================================
