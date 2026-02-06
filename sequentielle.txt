@@ -59,3 +59,7 @@ float* fullyConnected(
 void softmax(float* input, int size);
 float* cnnForwardSequential(const Tensor& inputImage);
 
+
+
+A REVOIR 
+1) SoftmaxLayer foward activation layer(vers la fin de la fonction)
