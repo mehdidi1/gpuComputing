@@ -82,6 +82,9 @@ public:
     
     /// Get number of dimensions (2 or 4)
     int ndims() const { return dims_.size(); }
+
+    /// Get all dimensions as vector [batch, channels, height, width] or [batch, features]
+    const std::vector<int>& get_shape() const { return dims_; }
     
     // ========================================================================
     // DATA ACCESS

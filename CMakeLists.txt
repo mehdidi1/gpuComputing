@@ -120,6 +120,11 @@ add_executable(test_tensor tests/test_tensor.cpp)
 target_link_libraries(test_tensor PRIVATE cnn_core)
 add_test(NAME TensorTest COMMAND test_tensor)
 
+# Pooling layer unit tests
+add_executable(test_pooling tests/test_pooling.cpp)
+target_link_libraries(test_pooling PRIVATE cnn_core)
+add_test(NAME PoolingTest COMMAND test_pooling)
+
 # Additional tests can be added later
 # add_executable(test_layers tests/test_layers.cpp)
 # target_link_libraries(test_layers PRIVATE cnn_core)
