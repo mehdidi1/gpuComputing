@@ -21,7 +21,6 @@ FullyConnectedLayer::FullyConnectedLayer(int in_features, int out_features)
       weights_(0, 0),  // Will be set by set_weights()
       bias_(out_features, 0.0f)
 {
-    // TODO: Initialize with given dimensions
 }
 
 void FullyConnectedLayer::forward(const Tensor& input, Tensor& output)
@@ -41,7 +40,36 @@ void FullyConnectedLayer::forward(const Tensor& input, Tensor& output)
     //                   weights.data(), out_features,
     //             0.0f, output.data(), out_features);
     // // Then add bias to each row
-    throw std::runtime_error("Not implemented");
+    
+        // Input must be [B, in_features]
+    if (input.ndims() != 2 ||
+        input.channels() != in_features_) {
+        throw std::runtime_error("FullyConnectedLayer::forward: input shape mismatch");
+    }
+
+    // Output must be [B, out_features]
+    if (output.ndims() != 2 ||
+        output.batch() != input.batch() ||
+        output.channels() != out_features_) {
+        throw std::runtime_error("FullyConnectedLayer::forward: output shape mismatch");
+    }
+
+    const int B = input.batch();
+
+    // Matrix multiplication
+    for (int b = 0; b < B; ++b) {
+        for (int j = 0; j < out_features_; ++j) {
+
+            float sum = 0.0f;
+
+            for (int i = 0; i < in_features_; ++i) {
+                sum += input(b, i) * weights_(i, j);
+            }
+
+            output(b, j) = sum + bias_[j];
+        }
+    }
+    
 }
 
 std::vector<int> FullyConnectedLayer::get_output_shape(const std::vector<int>& input_shape) const
@@ -49,19 +77,48 @@ std::vector<int> FullyConnectedLayer::get_output_shape(const std::vector<int>& i
     // TODO: Replace last dimension with out_features
     // input_shape = [batch, in_features]
     // output_shape = [batch, out_features]
-    throw std::runtime_error("Not implemented");
+    
+    if (input_shape.size() != 2) {
+        throw std::runtime_error(
+            "FullyConnectedLayer::get_output_shape: input must be 2D [batch, in_features]");
+    }
+
+    if (input_shape[1] != in_features_) {
+        throw std::runtime_error(
+            "FullyConnectedLayer::get_output_shape: in_features mismatch");
+    }
+
+    return { input_shape[0], out_features_ };
 }
 
 void FullyConnectedLayer::set_weights(const Tensor& weights)
 {
     // TODO: Store weights
     // weights shape: [in_features, out_features]
+
+    if (weights.ndims() != 2 ||
+        weights.batch() != in_features_ ||
+        weights.channels() != out_features_) {
+        throw std::runtime_error("FullyConnectedLayer::set_weights: shape mismatch");
+    }
+
+    for (int i = 0; i < in_features_; ++i) {
+        for (int j = 0; j < out_features_; ++j) {
+            weights_(i, j) = weights(i, j);
+        }
+    }
 }
 
 void FullyConnectedLayer::set_bias(const std::vector<float>& bias)
 {
     // TODO: Copy bias
     // bias size: [out_features]
+
+    if (static_cast<int>(bias.size()) != out_features_) {
+        throw std::runtime_error("FullyConnectedLayer::set_bias: size mismatch");
+    }
+
+    bias_ = bias;
 }
 
 // ============================================================================
