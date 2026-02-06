@@ -40,34 +40,34 @@ Track your progress as you implement each component.
 **File:** `src/layers/activation_layers.cpp`
 
 ### ReLULayer
-- [ ] Constructor
-- [ ] `forward(input, output)` - max(0, x)
-- [ ] `get_output_shape()` - identity
-- [ ] Test with simple inputs
+- [X] Constructor
+- [X] `forward(input, output)` - max(0, x)
+- [X] `get_output_shape()` - identity
+- [X] Test with simple inputs
 
 ### SigmoidLayer
-- [ ] Constructor
-- [ ] `forward(input, output)` - 1/(1+exp(-x))
-- [ ] `get_output_shape()` - identity
-- [ ] Handle numerical stability
+- [X] Constructor
+- [X] `forward(input, output)` - 1/(1+exp(-x))
+- [X] `get_output_shape()` - identity
+- [X] Handle numerical stability
 
 ### TanhLayer
-- [ ] Constructor
-- [ ] `forward(input, output)` - std::tanh
-- [ ] `get_output_shape()` - identity
+- [X] Constructor
+- [X] `forward(input, output)` - std::tanh
+- [X] `get_output_shape()` - identity
 
 ### SoftmaxLayer
-- [ ] Constructor
-- [ ] `forward(input, output)` - exp(x)/sum(exp(x))
-- [ ] `get_output_shape()` - identity
-- [ ] Subtract max for stability
-- [ ] Handle 2D tensors correctly
+- [X] Constructor
+- [X] `forward(input, output)` - exp(x)/sum(exp(x))
+- [X] `get_output_shape()` - identity
+- [X] Subtract max for stability
+- [X] Handle 2D tensors correctly
 
 ### Testing
-- [ ] Each activation produces correct output
-- [ ] Output shapes are preserved
-- [ ] Numerical stability verified
-- [ ] Compare against manual calculations
+- [X] Each activation produces correct output
+- [X] Output shapes are preserved
+- [X] Numerical stability verified
+- [X] Compare against manual calculations
 
 ---
 
@@ -76,23 +76,23 @@ Track your progress as you implement each component.
 **File:** `src/layers/pooling_layers.cpp`
 
 ### MaxPoolingLayer
-- [ ] Constructor with pool_size and stride
-- [ ] `forward(input, output)` - find maximum in windows
-- [ ] `get_output_shape()` - spatial dimension reduction
-- [ ] Formula: out_h = (in_h - pool_size) / stride + 1
-- [ ] Preserve batch and channel dimensions
+- [X] Constructor with pool_size and stride
+- [X] `forward(input, output)` - find maximum in windows
+- [X] `get_output_shape()` - spatial dimension reduction
+- [X] Formula: out_h = (in_h - pool_size) / stride + 1
+- [X] Preserve batch and channel dimensions
 
 ### AvgPoolingLayer
-- [ ] Constructor with pool_size and stride
-- [ ] `forward(input, output)` - compute mean in windows
-- [ ] `get_output_shape()` - same as max pooling
-- [ ] Average correctly (divide by pool_size²)
+- [X] Constructor with pool_size and stride
+- [X] `forward(input, output)` - compute mean in windows
+- [X] `get_output_shape()` - same as max pooling
+- [X] Average correctly (divide by pool_size²)
 
 ### Testing
-- [ ] Max/Avg pooling matches manual calculation
-- [ ] Output dimensions correct
-- [ ] Works with different pool sizes and strides
-- [ ] Edge cases handled properly
+- [X] Max/Avg pooling matches manual calculation
+- [X] Output dimensions correct
+- [X] Works with different pool sizes and strides
+- [X] Edge cases handled properly
 
 ---
 
