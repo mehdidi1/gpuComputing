@@ -104,7 +104,7 @@ Track your progress as you implement each component.
 - [ ] Constructor
 - [ ] `forward(input, output)` - reshape [B,C,H,W] → [B,C*H*W]
 - [ ] `get_output_shape()` - flatten spatial dimensions
-- [ ] Share memory (no copy)
+
 
 ### FullyConnectedLayer (CPU)
 - [ ] Constructor with in/out features
@@ -113,7 +113,6 @@ Track your progress as you implement each component.
 - [ ] `forward(input, output)` - matrix multiply + bias
   - [ ] Use nested loops or BLAS
   - [ ] output = input @ weights + bias
-- [ ] `get_output_shape()` - [batch, out_features]
 
 ### Testing
 - [ ] Flatten preserves data
