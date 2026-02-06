@@ -18,9 +18,10 @@
 FullyConnectedLayer::FullyConnectedLayer(int in_features, int out_features)
     : in_features_(in_features),
       out_features_(out_features),
-      weights_(0, 0),  // Will be set by set_weights()
+      weights_(in_features, out_features),  // Allocate weights tensor
       bias_(out_features, 0.0f)
 {
+    weights_.zeros();  // Initialize to zero
 }
 
 void FullyConnectedLayer::forward(const Tensor& input, Tensor& output)

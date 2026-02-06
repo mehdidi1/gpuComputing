@@ -135,6 +135,11 @@ add_executable(test_flatten tests/test_flatten.cpp)
 target_link_libraries(test_flatten PRIVATE cnn_core)
 add_test(NAME FlattenTest COMMAND test_flatten)
 
+# Fully connected layer unit tests
+add_executable(test_fully_connected tests/test_fully_connected.cpp)
+target_link_libraries(test_fully_connected PRIVATE cnn_core)
+add_test(NAME FullyConnectedTest COMMAND test_fully_connected)
+
 # Additional tests can be added later
 # add_executable(test_layers tests/test_layers.cpp)
 # target_link_libraries(test_layers PRIVATE cnn_core)
