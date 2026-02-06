@@ -109,18 +109,18 @@ if(ENABLE_DEBUG)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")  # Add debug symbols
 endif()
 
-# ============================================================================
-# TESTING (Optional)
-# ============================================================================
-# Uncomment to enable testing with CTest
+# ==========================================================================
+# TESTING
+# ==========================================================================
 
-# enable_testing()
-# 
-# # Example test executable
-# add_executable(test_tensor tests/test_tensor.cpp)
-# target_link_libraries(test_tensor PRIVATE cnn_core)
-# add_test(NAME TensorTest COMMAND test_tensor)
-#
+enable_testing()
+
+# Tensor unit tests
+add_executable(test_tensor tests/test_tensor.cpp)
+target_link_libraries(test_tensor PRIVATE cnn_core)
+add_test(NAME TensorTest COMMAND test_tensor)
+
+# Additional tests can be added later
 # add_executable(test_layers tests/test_layers.cpp)
 # target_link_libraries(test_layers PRIVATE cnn_core)
 # add_test(NAME LayerTest COMMAND test_layers)

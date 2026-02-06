@@ -7,30 +7,30 @@ Track your progress as you implement each component.
 **File:** `src/tensor.cpp` and `include/tensor.h`
 
 ### Constructors
-- [ ] `Tensor(int batch, int channels, int height, int width)` - 4D tensor
-- [ ] `Tensor(int batch, int features)` - 2D tensor  
-- [ ] `Tensor(int batch, int channels, int height, int width, const float* data)` - with data
-- [ ] `~Tensor()` - destructor
-- [ ] Memory properly allocated with `std::unique_ptr<float[]>`
+- [X] `Tensor(int batch, int channels, int height, int width)` - 4D tensor
+- [X] `Tensor(int batch, int features)` - 2D tensor  
+- [X] `Tensor(int batch, int channels, int height, int width, const float* data)` - with data
+- [X] `~Tensor()` - destructor
+- [X] Memory properly allocated with `std::unique_ptr<float[]>`
 
 ### Element Access
-- [ ] `operator()(int b, int c, int h, int w)` - mutable 4D access
-- [ ] `operator()(int b, int c, int h, int w) const` - const 4D access
-- [ ] `operator()(int b, int f)` - mutable 2D access
-- [ ] `operator()(int b, int f) const` - const 2D access
-- [ ] `compute_index()` helper - efficient linear indexing
+- [X] `operator()(int b, int c, int h, int w)` - mutable 4D access
+- [X] `operator()(int b, int c, int h, int w) const` - const 4D access
+- [X] `operator()(int b, int f)` - mutable 2D access
+- [X] `operator()(int b, int f) const` - const 2D access
+- [O] `compute_index()` helper - efficient linear indexing
 
 ### Data Operations
-- [ ] `fill(float value)` - fill with constant
-- [ ] `zeros()` - shorthand for fill(0)
-- [ ] `randn(float mean, float std)` - random normal distribution
-- [ ] `relu_inplace()` - apply ReLU
-- [ ] `clone()` - deep copy
+- [X] `fill(float value)` - fill with constant
+- [X] `zeros()` - shorthand for fill(0)
+- [O] `randn(float mean, float std)` - random normal distribution
+- [O] `relu_inplace()` - apply ReLU
+- [O] `clone()` - deep copy
 
 ### Testing
-- [ ] Tensor allocation works correctly
-- [ ] Indexing is row-major and efficient
-- [ ] Operations produce expected results
+- [X] Tensor allocation works correctly
+- [X] Indexing is row-major and efficient
+- [X] Operations produce expected results
 - [ ] Memory is properly freed
 
 ---
