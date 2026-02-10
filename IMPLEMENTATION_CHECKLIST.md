@@ -165,31 +165,31 @@ Track your progress as you implement each component.
 **File:** `src/model.cpp`
 
 ### Model Class
-- [ ] `add_layer(unique_ptr<ILayer>)` - add to sequence
-- [ ] `forward(input)` - execute all layers
-  - [ ] Start with input tensor
-  - [ ] For each layer:
-    - [ ] Get output shape
-    - [ ] Allocate output tensor
-    - [ ] Call layer.forward()
-    - [ ] Set output as input for next layer
-  - [ ] Return final output
+- [X] `add_layer(unique_ptr<ILayer>)` - add to sequence
+- [X] `forward(input)` - execute all layers
+  - [X] Start with input tensor
+  - [X] For each layer:
+    - [X] Get output shape
+    - [X] Allocate output tensor
+    - [X] Call layer.forward()
+    - [X] Set output as input for next layer
+  - [X] Return final output
   
-- [ ] `load_weights(filename)` - binary file I/O
-  - [ ] Design binary format
-  - [ ] Write/read header (magic, version, num_layers)
-  - [ ] For each layer:
-    - [ ] Write layer type
-    - [ ] Write weights dimensions and data
-    - [ ] Write bias dimensions and data
+- [X] `load_weights(filename)` - binary file I/O
+  - [X] Design binary format
+  - [X] Write/read header (magic, version, num_layers)
+  - [X] For each layer:
+    - [X] Write layer type
+    - [X] Write weights dimensions and data
+    - [X] Write bias dimensions and data
     
-- [ ] `save_weights(filename)` - complement of load_weights
+- [X] `save_weights(filename)` - complement of load_weights
 
 ### Testing
-- [ ] Layers execute in correct order
-- [ ] Output shapes propagate correctly
-- [ ] Weights load and work properly
-- [ ] Save/load roundtrip preserves values
+- [X] Layers execute in correct order
+- [X] Output shapes propagate correctly
+- [X] Weights load and work properly
+- [X] Save/load roundtrip preserves values
 
 ---
 

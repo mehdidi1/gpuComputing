@@ -113,15 +113,14 @@ class WeightExporter:
     @staticmethod
     def write_string(f, s):
         """Write null-terminated string to file"""
-        # TODO: Encode string as UTF-8 and write bytes
-        pass
+        data = s.encode("utf-8") + b"\x00"
+        f.write(data)
     
     @staticmethod
     def write_floats(f, arr):
         """Write float array to file (binary format)"""
-        # TODO: Convert numpy array to float32 and write binary data
-        # Use struct.pack for efficient binary writing
-        pass
+        arr_f32 = np.asarray(arr, dtype=np.float32)
+        f.write(arr_f32.tobytes(order="C"))
     
     @staticmethod
     def export_model(model, output_path):
@@ -139,9 +138,58 @@ class WeightExporter:
         4. Close file
         """
         print(f"Exporting model to {output_path}")
-        
-        # TODO: Implement export logic
-        raise NotImplementedError("Model export not yet implemented")
+
+        layers = []
+        for name, module in model.named_modules():
+            if isinstance(module, nn.Conv2d) or isinstance(module, nn.Linear):
+                layers.append((name, module))
+
+        with open(output_path, "wb") as f:
+            # Header
+            f.write(b"CNN!")
+            f.write(struct.pack("<I", 1))  # version
+            f.write(struct.pack("<I", len(layers)))
+
+            for name, module in layers:
+                if isinstance(module, nn.Conv2d):
+                    layer_type = 0
+                    weights = module.weight.detach().cpu().numpy().astype(np.float32)
+                    bias = (
+                        module.bias.detach().cpu().numpy().astype(np.float32)
+                        if module.bias is not None
+                        else np.zeros((weights.shape[0],), dtype=np.float32)
+                    )
+
+                    out_c, in_c, kh, kw = weights.shape
+                    f.write(struct.pack("<I", layer_type))
+                    f.write(struct.pack("<4I", out_c, in_c, kh, kw))
+                    WeightExporter.write_floats(f, weights)
+
+                    f.write(struct.pack("<I", bias.shape[0]))
+                    WeightExporter.write_floats(f, bias)
+
+                elif isinstance(module, nn.Linear):
+                    layer_type = 1
+                    weight = module.weight.detach().cpu().numpy().astype(np.float32)
+                    bias = (
+                        module.bias.detach().cpu().numpy().astype(np.float32)
+                        if module.bias is not None
+                        else np.zeros((weight.shape[0],), dtype=np.float32)
+                    )
+
+                    # PyTorch Linear weights are [out_features, in_features]
+                    # C++ expects [in_features, out_features]
+                    weight_t = weight.T
+                    in_f, out_f = weight_t.shape
+
+                    f.write(struct.pack("<I", layer_type))
+                    f.write(struct.pack("<4I", in_f, out_f, 1, 1))
+                    WeightExporter.write_floats(f, weight_t)
+
+                    f.write(struct.pack("<I", bias.shape[0]))
+                    WeightExporter.write_floats(f, bias)
+
+        print(f"Exported {len(layers)} weight layers")
 
 
 # ============================================================================
@@ -163,16 +211,13 @@ def load_mnist_data(batch_size=32, data_dir="./data"):
         transforms.Normalize((0.1307,), (0.3081,))
     ])
     
-    # TODO: Load training set
-    # train_set = datasets.MNIST(data_dir, train=True, download=True, transform=transform)
-    # train_loader = torch.utils.data.DataLoader(train_set, batch_size=batch_size, shuffle=True)
-    
-    # TODO: Load test set
-    # test_set = datasets.MNIST(data_dir, train=False, download=True, transform=transform)
-    # test_loader = torch.utils.data.DataLoader(test_set, batch_size=batch_size, shuffle=False)
-    
-    # return train_loader, test_loader
-    raise NotImplementedError("MNIST loading not yet implemented")
+    train_set = datasets.MNIST(data_dir, train=True, download=True, transform=transform)
+    train_loader = torch.utils.data.DataLoader(train_set, batch_size=batch_size, shuffle=True)
+
+    test_set = datasets.MNIST(data_dir, train=False, download=True, transform=transform)
+    test_loader = torch.utils.data.DataLoader(test_set, batch_size=batch_size, shuffle=False)
+
+    return train_loader, test_loader
 
 
 def train_model(model, train_loader, num_epochs=5):
@@ -193,15 +238,23 @@ def train_model(model, train_loader, num_epochs=5):
     print(f"Training on device: {device}")
     print(f"Number of epochs: {num_epochs}")
     
-    # TODO: Implement training loop
-    # for epoch in range(num_epochs):
-    #     total_loss = 0.0
-    #     for batch_idx, (data, target) in enumerate(train_loader):
-    #         # Forward pass
-    #         # Backward pass
-    #         # Update weights
-    #         # Accumulate loss
-    #     print(f"Epoch {epoch+1}/{num_epochs}: Loss = {total_loss/len(train_loader)}")
+    for epoch in range(num_epochs):
+        model.train()
+        total_loss = 0.0
+        for batch_idx, (data, target) in enumerate(train_loader):
+            data = data.to(device)
+            target = target.to(device)
+
+            optimizer.zero_grad()
+            output = model(data)
+            loss = criterion(output, target)
+            loss.backward()
+            optimizer.step()
+
+            total_loss += loss.item()
+
+        avg_loss = total_loss / max(1, len(train_loader))
+        print(f"Epoch {epoch+1}/{num_epochs}: Loss = {avg_loss:.6f}")
 
 
 def evaluate_model(model, test_loader):
@@ -216,14 +269,29 @@ def evaluate_model(model, test_loader):
     criterion = nn.CrossEntropyLoss()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
-    # TODO: Implement evaluation loop
-    # with torch.no_grad():
-    #     for data, target in test_loader:
-    #         # Forward pass
-    #         # Compute loss and accuracy
-    
-    # print(f"Test Accuracy: {accuracy:.4f}")
-    # print(f"Test Loss: {avg_loss:.4f}")
+    model = model.to(device)
+    total_loss = 0.0
+    correct = 0
+    total = 0
+
+    with torch.no_grad():
+        for data, target in test_loader:
+            data = data.to(device)
+            target = target.to(device)
+
+            output = model(data)
+            loss = criterion(output, target)
+            total_loss += loss.item()
+
+            preds = output.argmax(dim=1)
+            correct += (preds == target).sum().item()
+            total += target.numel()
+
+    avg_loss = total_loss / max(1, len(test_loader))
+    accuracy = correct / max(1, total)
+
+    print(f"Test Accuracy: {accuracy:.4f}")
+    print(f"Test Loss: {avg_loss:.4f}")
 
 
 # ============================================================================
@@ -247,13 +315,39 @@ def export_test_data(model, test_loader, output_dir="./test_data"):
     
     print(f"Exporting test data to {output_dir}")
     
-    # TODO: Implement test data export
-    # 1. Iterate through test_loader
-    # 2. Get model outputs for each batch
-    # 3. Save inputs and outputs to binary files
-    # 4. Save metadata
-    
-    raise NotImplementedError("Test data export not yet implemented")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = model.to(device)
+    model.eval()
+
+    inputs = []
+    outputs = []
+
+    with torch.no_grad():
+        for data, _ in test_loader:
+            data = data.to(device)
+            out = model(data)
+
+            inputs.append(data.cpu().numpy().astype(np.float32))
+            outputs.append(out.cpu().numpy().astype(np.float32))
+
+    input_arr = np.concatenate(inputs, axis=0)
+    output_arr = np.concatenate(outputs, axis=0)
+
+    input_path = Path(output_dir) / "test_input.bin"
+    output_path = Path(output_dir) / "test_output.bin"
+    meta_path = Path(output_dir) / "metadata.txt"
+
+    input_arr.tofile(input_path)
+    output_arr.tofile(output_path)
+
+    with open(meta_path, "w", encoding="utf-8") as f:
+        f.write(f"num_samples={input_arr.shape[0]}\n")
+        f.write(f"input_shape={input_arr.shape}\n")
+        f.write(f"output_shape={output_arr.shape}\n")
+
+    print(f"Saved inputs to {input_path}")
+    print(f"Saved outputs to {output_path}")
+    print(f"Saved metadata to {meta_path}")
 
 
 # ============================================================================
@@ -286,27 +380,21 @@ def main():
     # 2. Load data
     # ========================================================================
     print("\n2. Loading MNIST data...")
-    # TODO: Uncomment when load_mnist_data is implemented
-    # train_loader, test_loader = load_mnist_data(batch_size=32)
+    train_loader, test_loader = load_mnist_data(batch_size=32)
     
     # ========================================================================
     # 3. Train or load model
     # ========================================================================
     print("\n3. Training model (this will take a while)...")
-    print("   TODO: Uncomment when train_model is implemented")
-    # TODO: Uncomment when train_model is implemented
-    # train_model(model, train_loader, num_epochs=5)
-    # torch.save(model.state_dict(), output_dir / "model_trained.pth")
-    
-    print("   Skipping training for now (skeleton phase)")
+    train_model(model, train_loader, num_epochs=3)
+    torch.save(model.state_dict(), output_dir / "model_trained.pth")
+    print("   ✓ Model trained and saved")
     
     # ========================================================================
     # 4. Evaluate model
     # ========================================================================
     print("\n4. Evaluating model...")
-    print("   TODO: Uncomment when evaluate_model is implemented")
-    # TODO: Uncomment when evaluate_model is implemented
-    # evaluate_model(model, test_loader)
+    evaluate_model(model, test_loader)
     
     # ========================================================================
     # 5. Export model weights
@@ -323,17 +411,18 @@ def main():
     # 6. Export test data for validation
     # ========================================================================
     print("\n6. Exporting test data for validation...")
-    print("   TODO: Uncomment when export_test_data is implemented")
-    # TODO: Uncomment when export_test_data is implemented
-    # try:
-    #     export_test_data(model, test_loader, output_dir / "test_data")
-    #     print("   ✓ Test data exported")
-    # except NotImplementedError as e:
-    #     print(f"   ✗ {e}")
+    try:
+        export_test_data(model, test_loader, output_dir / "test_data")
+        print("   ✓ Test data exported")
+    except Exception as e:
+        print(f"   ✗ {e}")
     
     print("\n" + "=" * 50)
-    print("Export script skeleton complete!")
-    print("TODO: Implement the functions marked with TODO comments")
+    print("✓ Model training and export pipeline complete!")
+    print(f"   Weights saved to: {output_dir}/model_weights.bin")
+    print(f"   Checkpoint saved to: {output_dir}/model_trained.pth")
+    print(f"   Test data saved to: {output_dir}/test_data/")
+    print("=" * 50)
 
 
 if __name__ == "__main__":
