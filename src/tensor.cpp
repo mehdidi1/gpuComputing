@@ -40,6 +40,19 @@ Tensor::~Tensor()
     // But if using cudaHostAlloc, manually free here
 }
 
+Tensor Tensor::clone() const
+{
+    // Create new tensor with same dimensions
+    Tensor copy = (dims_.size() == 4)
+        ? Tensor(dims_[0], dims_[1], dims_[2], dims_[3])
+        : Tensor(dims_[0], dims_[1]);
+
+    // Copy all data
+    std::copy(data_.get(), data_.get() + total_size_, copy.data_.get());
+
+    return copy;
+}
+
 // ============================================================================
 // ELEMENT ACCESS (4D)
 // ============================================================================

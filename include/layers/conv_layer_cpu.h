@@ -19,14 +19,6 @@
  * - kernel_h, kernel_w: Height and width of each kernel
  * - stride: Step size for sliding window (default 1)
  * - padding: Zero-padding around input (default 0)
- * 
- * TODO: Implement CPU convolution using nested loops
- * Hints:
- * 1. Allocate output tensor with shape [batch, num_filters, out_h, out_w]
- * 2. For each output position, slide the kernel window and compute dot product
- * 3. Add bias after convolution
- * 
- * Performance: Slow, but useful for validation and testing
  */
 class ConvolutionLayerCPU : public ILayer {
 public:
@@ -48,7 +40,6 @@ public:
     /**
      * Forward pass: Apply convolution to input
      * 
-     * TODO: Implement 2D convolution
      * Steps:
      * 1. Calculate output dimensions: out_h = (in_h + 2*padding - kernel_h) / stride + 1
      * 2. Allocate output tensor [batch, num_filters, out_h, out_w]
@@ -67,7 +58,6 @@ public:
     /**
      * Get output shape given input shape
      * 
-     * TODO: Calculate output spatial dimensions based on:
      * - Input height/width
      * - Kernel size
      * - Stride
@@ -81,17 +71,13 @@ public:
     
     /**
      * Initialize weights from external tensor
-     * 
-     * TODO: Copy kernel data to internal storage
-     * 
+     *
      * @param kernels - Tensor of shape [num_filters, in_channels, kernel_h, kernel_w]
      */
     void set_weights(const Tensor& kernels);
     
     /**
      * Initialize biases from external tensor
-     * 
-     * TODO: Copy bias data to internal storage
      * 
      * @param bias - Vector of size [num_filters]
      */

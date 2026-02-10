@@ -60,6 +60,10 @@ public:
     // Prevent copying by default (implement copy constructor if needed)
     Tensor(const Tensor&) = delete;
     Tensor& operator=(const Tensor&) = delete;
+
+     // Allow move semantics (efficient transfer of ownership)
+    Tensor(Tensor&& other) noexcept = default;
+    Tensor& operator=(Tensor&& other) noexcept = default;
     
     // ========================================================================
     // DIMENSION ACCESSORS
@@ -136,6 +140,8 @@ public:
      * Fill entire tensor with zeros 
      */
     void zeros();
+
+    Tensor clone() const;
     
 private:
     // ========================================================================

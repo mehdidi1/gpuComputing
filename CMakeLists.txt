@@ -140,6 +140,11 @@ add_executable(test_fully_connected tests/test_fully_connected.cpp)
 target_link_libraries(test_fully_connected PRIVATE cnn_core)
 add_test(NAME FullyConnectedTest COMMAND test_fully_connected)
 
+# Convolution layer unit tests
+add_executable(test_conv tests/test_conv.cpp)
+target_link_libraries(test_conv PRIVATE cnn_core)
+add_test(NAME ConvolutionTest COMMAND test_conv)
+
 # Additional tests can be added later
 # add_executable(test_layers tests/test_layers.cpp)
 # target_link_libraries(test_layers PRIVATE cnn_core)

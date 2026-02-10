@@ -128,30 +128,30 @@ Track your progress as you implement each component.
 **File:** `src/layers/cpu/conv_layer.cpp`
 
 ### ConvolutionLayerCPU
-- [ ] Constructor with num_filters, kernel_h, kernel_w, stride, padding
-- [ ] `set_weights(Tensor)` - [num_filters, in_channels, kernel_h, kernel_w]
-- [ ] `set_bias(vector)` - [num_filters]
-- [ ] `get_output_shape()` - calculate reduced spatial dims
-  - [ ] out_h = (in_h + 2*padding - kernel_h) / stride + 1
-  - [ ] out_w = (in_w + 2*padding - kernel_w) / stride + 1
+- [X] Constructor with num_filters, kernel_h, kernel_w, stride, padding
+- [X] `set_weights(Tensor)` - [num_filters, in_channels, kernel_h, kernel_w]
+- [X] `set_bias(vector)` - [num_filters]
+- [X] `get_output_shape()` - calculate reduced spatial dims
+  - [X] out_h = (in_h + 2*padding - kernel_h) / stride + 1
+  - [X] out_w = (in_w + 2*padding - kernel_w) / stride + 1
   
 ### forward() Implementation
-- [ ] Iterate through batches
-- [ ] Iterate through output filters
-- [ ] Iterate through spatial positions (h, w)
-- [ ] Iterate through input channels
-- [ ] Iterate through kernel positions (kh, kw)
-- [ ] Accumulate: output[b,k,h,w] += input[...] * kernel[...]
-- [ ] Add bias: output[b,k,h,w] += bias[k]
-- [ ] Handle padding by boundary checking
+- [X] Iterate through batches
+- [X] Iterate through output filters
+- [X] Iterate through spatial positions (h, w)
+- [X] Iterate through input channels
+- [X] Iterate through kernel positions (kh, kw)
+- [X] Accumulate: output[b,k,h,w] += input[...] * kernel[...]
+- [X] Add bias: output[b,k,h,w] += bias[k]
+- [X] Handle padding by boundary checking
 
 ### Testing
-- [ ] Output shape matches expected
-- [ ] Simple 1x1 kernel works
-- [ ] Identity kernel produces correct results
-- [ ] Padding works properly
-- [ ] Stride works properly
-- [ ] Compare small test against manual calculation
+- [X] Output shape matches expected
+- [X] Simple 1x1 kernel works
+- [X] Identity kernel produces correct results
+- [X] Padding works properly
+- [X] Stride works properly
+- [X] Compare small test against manual calculation
 
 ### Optimization (Optional)
 - [ ] Use BLAS for better performance
