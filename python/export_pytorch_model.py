@@ -10,8 +10,6 @@ This script:
 3. Exports weights to a binary format readable by C++
 4. Saves test inputs/outputs for validation
 
-TODO: Implement weight exporting and data validation
-
 Requirements:
     pip install torch torchvision numpy
 """
@@ -44,7 +42,6 @@ class SimpleCNN(nn.Module):
         FC(10) -> Softmax
         Output: [batch, 10]
     
-    TODO: Modify this architecture as needed for your experiments
     """
     def __init__(self):
         super(SimpleCNN, self).__init__()
@@ -200,7 +197,6 @@ def load_mnist_data(batch_size=32, data_dir="./data"):
     """
     Load MNIST dataset and return DataLoaders
     
-    TODO: Implement MNIST loading
     Returns:
         train_loader, test_loader - PyTorch DataLoaders
     """
@@ -224,10 +220,6 @@ def train_model(model, train_loader, num_epochs=5):
     """
     Train the PyTorch model
     
-    TODO: Implement training loop
-    - Use CrossEntropyLoss and Adam optimizer
-    - Print loss after each epoch
-    - Save model checkpoint
     """
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=0.001)
@@ -260,10 +252,6 @@ def train_model(model, train_loader, num_epochs=5):
 def evaluate_model(model, test_loader):
     """
     Evaluate model on test set
-    
-    TODO: Implement evaluation
-    - Compute accuracy and loss
-    - Print metrics
     """
     model.eval()
     criterion = nn.CrossEntropyLoss()
@@ -301,9 +289,7 @@ def evaluate_model(model, test_loader):
 def export_test_data(model, test_loader, output_dir="./test_data"):
     """
     Export test inputs and outputs for validation against C++ implementation
-    
-    TODO: Implement test data export
-    
+        
     Export format:
     - test_input.bin: Input tensors [num_samples, 1, 28, 28] as float32
     - test_output.bin: Model outputs [num_samples, 10] as float32

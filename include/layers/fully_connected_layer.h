@@ -19,9 +19,6 @@
  * 
  * Computation:
  *   output[b,f] = sum_i (input[b,i] * weights[i,f]) + bias[f]
- * 
- * TODO: Implement matrix multiplication efficiently
- * For GPU: Can use cuBLAS for optimized GEMM
  */
 class FullyConnectedLayer : public ILayer {
 public:
@@ -38,11 +35,6 @@ public:
     /**
      * Forward pass: Matrix multiplication
      * 
-     * TODO: Implement y = x @ W + b
-     * 
-     * For CPU: Use nested loops or BLAS library
-     * For GPU: Use cuBLAS sgemm (single-precision general matrix multiply)
-     * 
      * @param input - [batch, in_features]
      * @param output - [batch, out_features]
      */
@@ -51,7 +43,6 @@ public:
     /**
      * Get output shape
      * 
-     * TODO: Replace last dimension with out_features
      * [batch, in_features] -> [batch, out_features]
      */
     std::vector<int> get_output_shape(const std::vector<int>& input_shape) const override;
@@ -59,7 +50,6 @@ public:
     /**
      * Set weights from external tensor
      * 
-     * TODO: Copy or store reference to weights
      * Shape should be [in_features, out_features]
      * 
      * @param weights - Weight matrix
@@ -69,7 +59,6 @@ public:
     /**
      * Set biases
      * 
-     * TODO: Copy bias values
      * Size should be [out_features]
      * 
      * @param bias - Bias vector

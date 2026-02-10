@@ -6,19 +6,13 @@
 // 
 
 #include "layers/flatten_layer.h"
+#include <cstring>
 #include <stdexcept>
 
 FlattenLayer::FlattenLayer() {}
 
 void FlattenLayer::forward(const Tensor& input, Tensor& output)
 {
-    // TODO: Reshape 4D to 2D
-    // 
-    // [batch, channels, height, width] -> [batch, channels*height*width]
-    // 
-    // Important: Share the same underlying memory (no data copy)
-    // The output tensor should point to the same data as input
-    // but with different dimension interpretation
     
     const int B = input.batch();
     const int C = input.channels();
@@ -34,23 +28,13 @@ void FlattenLayer::forward(const Tensor& input, Tensor& output)
         throw std::runtime_error("FlattenLayer::forward: output shape mismatch");
     }
 
-    // Copie en respectant le stockage row-major
-    for (int b = 0; b < B; ++b) {
-        int index = 0;
-
-        for (int c = 0; c < C; ++c) {
-            for (int h = 0; h < H; ++h) {
-                for (int w = 0; w < W; ++w) {
-                    output(b, index++) = input(b, c, h, w);
-                }
-            }
-        }
-    }
+    // Copy all data (same total size) in row-major order
+    std::memcpy(output.data(), input.data(),
+                static_cast<size_t>(B * flattened_size) * sizeof(float));
 }
 
 std::vector<int> FlattenLayer::get_output_shape(const std::vector<int>& input_shape) const
 {
-    // TODO: Flatten last 3 dimensions into 1
     // input_shape = [batch, channels, height, width]
     // output_shape = [batch, channels*height*width]
     if (input_shape.size() != 4) {

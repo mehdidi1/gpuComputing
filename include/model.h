@@ -74,13 +74,6 @@ public:
      */
     void load_weights(const std::string& filename);
     
-    /**
-     * Save weights to a file
-     * 
-     * @param filename - Path to save weights
-     */
-    void save_weights(const std::string& filename);
-    
 private:
     std::vector<std::unique_ptr<ILayer>> layers_;
 };

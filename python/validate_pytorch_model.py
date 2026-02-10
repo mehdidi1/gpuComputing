@@ -13,7 +13,6 @@ This script:
 Usage:
     python3 validate_pytorch_model.py --cpp_output output.bin --pytorch_model model.pth
 
-TODO: Implement validation functions
 
 Requirements:
     pip install torch torchvision numpy
@@ -55,7 +54,6 @@ def load_pytorch_output(model, input_data, device="cpu"):
     """
     Generate reference output from PyTorch model
     
-    TODO: Implement PyTorch inference
     """
     model.eval()
     model = model.to(device)
@@ -89,11 +87,16 @@ def compute_metrics(cpp_output, pytorch_output):
     ref_norm = float(np.sqrt(np.sum(pytorch_output ** 2)))
     relative_error = float(l2_error / ref_norm) if ref_norm > 0 else float("inf")
 
+    cpp_pred = np.argmax(cpp_output, axis=1)
+    pytorch_pred = np.argmax(pytorch_output, axis=1)
+    argmax_agreement = float(np.mean(cpp_pred == pytorch_pred))
+
     return {
         "l2_error": l2_error,
         "max_error": max_error,
         "mean_abs_error": mean_abs_error,
         "relative_error": relative_error,
+        "argmax_agreement": argmax_agreement,
     }
 
 
@@ -115,6 +118,7 @@ def print_metrics(metrics, tolerance=1e-4):
     print(f"Max Error        : {metrics['max_error']:.6e} {status(max_ok)}")
     print(f"Mean Abs Error   : {metrics['mean_abs_error']:.6e} {status(mean_ok)}")
     print(f"Relative Error   : {metrics['relative_error']:.6e} {status(rel_ok)}")
+    print(f"Argmax Agreement : {metrics['argmax_agreement']:.2%}")
 
     overall = max_ok and mean_ok and rel_ok
     print("-" * 50)

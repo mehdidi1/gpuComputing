@@ -1,12 +1,6 @@
 // ============================================================================
 // Fully Connected Layer Implementation
 // ============================================================================
-// 
-// TODO: Implement matrix multiplication: output = input @ weights + bias
-// 
-// For CPU: Use simple nested loops or BLAS
-// For GPU: Use cuBLAS sgemm (single-precision general matrix multiply)
-// 
 
 #include "layers/fully_connected_layer.h"
 #include <cstring>
@@ -16,43 +10,24 @@
 // ============================================================================
 
 FullyConnectedLayer::FullyConnectedLayer(int in_features, int out_features)
-    : in_features_(in_features),
-      out_features_(out_features),
-      weights_(in_features, out_features),  // Allocate weights tensor
-      bias_(out_features, 0.0f)
-{
-    weights_.zeros();  // Initialize to zero
+    : in_features_(in_features), out_features_(out_features),
+      weights_(in_features, out_features), // Allocate weights tensor
+      bias_(out_features, 0.0f) {
+    weights_.zeros(); // Initialize to zero
 }
 
-void FullyConnectedLayer::forward(const Tensor& input, Tensor& output)
-{
-    // TODO: Implement matrix multiplication
-    // 
-    // For each batch sample b:
-    //   For each output feature f:
-    //     output[b,f] = sum_i (input[b,i] * weights[i,f]) + bias[f]
-    // 
-    // Can use nested loops or call BLAS library (cblas_sgemm)
-    // 
-    // CBLAS example:
-    // cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-    //             batch, out_features, in_features,
-    //             1.0f, input.data(), in_features,
-    //                   weights.data(), out_features,
-    //             0.0f, output.data(), out_features);
-    // // Then add bias to each row
-    
-        // Input must be [B, in_features]
-    if (input.ndims() != 2 ||
-        input.channels() != in_features_) {
-        throw std::runtime_error("FullyConnectedLayer::forward: input shape mismatch");
+void FullyConnectedLayer::forward(const Tensor &input, Tensor &output) {
+    // Input must be [B, in_features]
+    if (input.ndims() != 2 || input.channels() != in_features_) {
+        throw std::runtime_error(
+            "FullyConnectedLayer::forward: input shape mismatch");
     }
 
     // Output must be [B, out_features]
-    if (output.ndims() != 2 ||
-        output.batch() != input.batch() ||
+    if (output.ndims() != 2 || output.batch() != input.batch() ||
         output.channels() != out_features_) {
-        throw std::runtime_error("FullyConnectedLayer::forward: output shape mismatch");
+        throw std::runtime_error(
+            "FullyConnectedLayer::forward: output shape mismatch");
     }
 
     const int B = input.batch();
@@ -70,18 +45,13 @@ void FullyConnectedLayer::forward(const Tensor& input, Tensor& output)
             output(b, j) = sum + bias_[j];
         }
     }
-    
 }
 
-std::vector<int> FullyConnectedLayer::get_output_shape(const std::vector<int>& input_shape) const
-{
-    // TODO: Replace last dimension with out_features
-    // input_shape = [batch, in_features]
-    // output_shape = [batch, out_features]
-    
+std::vector<int> FullyConnectedLayer::get_output_shape(
+    const std::vector<int> &input_shape) const {
     if (input_shape.size() != 2) {
-        throw std::runtime_error(
-            "FullyConnectedLayer::get_output_shape: input must be 2D [batch, in_features]");
+        throw std::runtime_error("FullyConnectedLayer::get_output_shape: input "
+                                 "must be 2D [batch, in_features]");
     }
 
     if (input_shape[1] != in_features_) {
@@ -89,18 +59,14 @@ std::vector<int> FullyConnectedLayer::get_output_shape(const std::vector<int>& i
             "FullyConnectedLayer::get_output_shape: in_features mismatch");
     }
 
-    return { input_shape[0], out_features_ };
+    return {input_shape[0], out_features_};
 }
 
-void FullyConnectedLayer::set_weights(const Tensor& weights)
-{
-    // TODO: Store weights
-    // weights shape: [in_features, out_features]
-
-    if (weights.ndims() != 2 ||
-        weights.batch() != in_features_ ||
+void FullyConnectedLayer::set_weights(const Tensor &weights) {
+    if (weights.ndims() != 2 || weights.batch() != in_features_ ||
         weights.channels() != out_features_) {
-        throw std::runtime_error("FullyConnectedLayer::set_weights: shape mismatch");
+        throw std::runtime_error(
+            "FullyConnectedLayer::set_weights: shape mismatch");
     }
 
     for (int i = 0; i < in_features_; ++i) {
@@ -110,44 +76,36 @@ void FullyConnectedLayer::set_weights(const Tensor& weights)
     }
 }
 
-void FullyConnectedLayer::set_bias(const std::vector<float>& bias)
-{
-    // TODO: Copy bias
-    // bias size: [out_features]
-
+void FullyConnectedLayer::set_bias(const std::vector<float> &bias) {
     if (static_cast<int>(bias.size()) != out_features_) {
-        throw std::runtime_error("FullyConnectedLayer::set_bias: size mismatch");
+        throw std::runtime_error(
+            "FullyConnectedLayer::set_bias: size mismatch");
     }
 
     bias_ = bias;
 }
 
 // ============================================================================
-// Fully Connected Layer GPU (CUDA with cuBLAS)
+// Fully Connected Layer GPU
 // ============================================================================
 
-FullyConnectedLayerGPU::FullyConnectedLayerGPU(int in_features, int out_features)
-    : in_features_(in_features),
-      out_features_(out_features),
-      d_weights_(nullptr),
-      d_bias_(nullptr),
-      weights_(0, 0),
-      bias_(out_features, 0.0f)
-{
+FullyConnectedLayerGPU::FullyConnectedLayerGPU(int in_features,
+                                               int out_features)
+    : in_features_(in_features), out_features_(out_features),
+      d_weights_(nullptr), d_bias_(nullptr), weights_(0, 0),
+      bias_(out_features, 0.0f) {
     // TODO: Initialize GPU pointers to nullptr
 }
 
-FullyConnectedLayerGPU::~FullyConnectedLayerGPU()
-{
+FullyConnectedLayerGPU::~FullyConnectedLayerGPU() {
     // TODO: Free GPU memory
     // if (d_weights_) cudaFree(d_weights_);
     // if (d_bias_) cudaFree(d_bias_);
 }
 
-void FullyConnectedLayerGPU::forward(const Tensor& input, Tensor& output)
-{
+void FullyConnectedLayerGPU::forward(const Tensor &input, Tensor &output) {
     // TODO: Implement GPU matrix multiplication using cuBLAS
-    // 
+    //
     // Steps:
     // 1. Allocate GPU memory for weights and bias if needed
     // 2. Copy input to GPU: cudaMemcpy(d_input, input.data(), ...)
@@ -161,18 +119,16 @@ void FullyConnectedLayerGPU::forward(const Tensor& input, Tensor& output)
     throw std::runtime_error("Not implemented");
 }
 
-std::vector<int> FullyConnectedLayerGPU::get_output_shape(const std::vector<int>& input_shape) const
-{
+std::vector<int> FullyConnectedLayerGPU::get_output_shape(
+    const std::vector<int> &input_shape) const {
     // TODO: Same as CPU version
     throw std::runtime_error("Not implemented");
 }
 
-void FullyConnectedLayerGPU::set_weights(const Tensor& weights)
-{
+void FullyConnectedLayerGPU::set_weights(const Tensor &weights) {
     // TODO: Copy weights to GPU memory
 }
 
-void FullyConnectedLayerGPU::set_bias(const std::vector<float>& bias)
-{
+void FullyConnectedLayerGPU::set_bias(const std::vector<float> &bias) {
     // TODO: Copy bias to GPU memory
 }

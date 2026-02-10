@@ -101,25 +101,25 @@ Track your progress as you implement each component.
 **Files:** `src/layers/flatten_layer.cpp` and `src/layers/fully_connected_layer.cpp`
 
 ### FlattenLayer
-- [ ] Constructor
-- [ ] `forward(input, output)` - reshape [B,C,H,W] → [B,C*H*W]
-- [ ] `get_output_shape()` - flatten spatial dimensions
+- [X] Constructor
+- [X] `forward(input, output)` - reshape [B,C,H,W] → [B,C*H*W]
+- [X] `get_output_shape()` - flatten spatial dimensions
 
 
 ### FullyConnectedLayer (CPU)
-- [ ] Constructor with in/out features
-- [ ] `set_weights(Tensor)` - [in_features, out_features]
-- [ ] `set_bias(vector)` - [out_features]
-- [ ] `forward(input, output)` - matrix multiply + bias
-  - [ ] Use nested loops or BLAS
-  - [ ] output = input @ weights + bias
+- [X] Constructor with in/out features
+- [X] `set_weights(Tensor)` - [in_features, out_features]
+- [X] `set_bias(vector)` - [out_features]
+- [X] `forward(input, output)` - matrix multiply + bias
+  - [X] Use nested loops or BLAS
+  - [X] output = input @ weights + bias
 
 ### Testing
-- [ ] Flatten preserves data
-- [ ] FC output dimensions correct
-- [ ] Manual calculation matches
-- [ ] Bias addition works
-- [ ] Works with various sizes
+- [X] Flatten preserves data
+- [X] FC output dimensions correct
+- [X] Manual calculation matches
+- [X] Bias addition works
+- [X] Works with various sizes
 
 ---
 
@@ -198,31 +198,31 @@ Track your progress as you implement each component.
 **Files:** `python/export_pytorch_model.py` and `python/validate_pytorch_model.py`
 
 ### Model Definition
-- [ ] SimpleCNN class defined with proper architecture
-- [ ] Conv2d, ReLU, MaxPool2d, Linear layers
+- [X] SimpleCNN class defined with proper architecture
+- [X] Conv2d, ReLU, MaxPool2d, Linear layers
 
 ### Weight Export (`export_pytorch_model.py`)
-- [ ] `WeightExporter.export_model()` implementation
-  - [ ] Write magic number and version
-  - [ ] Iterate through PyTorch layers
-  - [ ] Extract weights and biases
-  - [ ] Write to binary file with format specification
+- [X] `WeightExporter.export_model()` implementation
+  - [X] Write magic number and version
+  - [X] Iterate through PyTorch layers
+  - [X] Extract weights and biases
+  - [X] Write to binary file with format specification
   
-- [ ] Data loading for training
-- [ ] Model training function
-- [ ] Test data export function
+- [X] Data loading for training
+- [X] Model training function
+- [X] Test data export function
 
 ### Model Validation (`validate_pytorch_model.py`)
-- [ ] `load_binary_output()` - read C++ results
-- [ ] `load_pytorch_output()` - run PyTorch inference
-- [ ] `compute_metrics()` - L2 error, max error, relative error
-- [ ] `print_metrics()` - formatted output
+- [X] `load_binary_output()` - read C++ results
+- [X] `load_pytorch_output()` - run PyTorch inference
+- [X] `compute_metrics()` - L2 error, max error, relative error
+- [X] `print_metrics()` - formatted output
 
 ### Testing
-- [ ] PyTorch model can export weights
-- [ ] C++ can load exported weights
-- [ ] Outputs match within tolerance (1e-4)
-- [ ] Different input sizes work
+- [X] PyTorch model can export weights
+- [X] C++ can load exported weights
+- [X] Outputs match within tolerance (1e-4)
+- [X] Different input sizes work
 
 ---
 
