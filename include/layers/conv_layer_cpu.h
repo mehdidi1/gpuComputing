@@ -82,6 +82,12 @@ public:
      * @param bias - Vector of size [num_filters]
      */
     void set_bias(const std::vector<float>& bias);
+
+    /**
+     * Accessors for serialization
+     */
+    const Tensor& get_weights() const { return kernels_; }
+    const std::vector<float>& get_bias() const { return bias_; }
     
 private:
     int num_filters_;   // Number of output channels

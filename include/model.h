@@ -22,7 +22,6 @@
  *   
  *   Tensor output = model.forward(input);
  * 
- * TODO: Implement layer sequencing and forward pass orchestration
  */
 class Model {
 public:
@@ -32,24 +31,12 @@ public:
     /**
      * Add a layer to the model (takes ownership)
      * 
-     * TODO: Store the layer in a vector
-     * Validate input/output shapes for compatibility
-     * 
      * @param layer - Unique pointer to a layer implementation
      */
     void add_layer(std::unique_ptr<ILayer> layer);
     
     /**
      * Forward pass through all layers
-     * 
-     * TODO:
-     * 1. Start with input tensor
-     * 2. For each layer in sequence:
-     *    - Get output shape from layer
-     *    - Allocate output tensor if needed
-     *    - Call layer->forward(input, output)
-     *    - Output becomes input for next layer
-     * 3. Return final output tensor
      * 
      * @param input - Input tensor
      * @return Final output tensor after all layers
@@ -72,10 +59,9 @@ public:
     /**
      * Load weights from a file
      * 
-     * TODO: Implement weight loading from binary or text format
-     * Should iterate through all layers and load their weights
+
      * 
-     * File format (suggested):
+     * File format:
      * - Header: Magic number, version, num_layers
      * - For each layer:
      *   - Layer type ID
@@ -90,9 +76,6 @@ public:
     
     /**
      * Save weights to a file
-     * 
-     * TODO: Implement weight saving for all layers
-     * Should use same format as load_weights
      * 
      * @param filename - Path to save weights
      */

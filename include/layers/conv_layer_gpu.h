@@ -83,6 +83,12 @@ public:
      * @param bias - CPU vector with bias data
      */
     void set_bias(const std::vector<float>& bias);
+
+    /**
+     * Accessors for serialization
+     */
+    const Tensor& get_weights() const { return kernels_; }
+    const std::vector<float>& get_bias() const { return bias_; }
     
 private:
     int num_filters_;

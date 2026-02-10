@@ -145,6 +145,11 @@ add_executable(test_conv tests/test_conv.cpp)
 target_link_libraries(test_conv PRIVATE cnn_core)
 add_test(NAME ConvolutionTest COMMAND test_conv)
 
+# Model unit tests
+add_executable(test_model tests/test_model.cpp)
+target_link_libraries(test_model PRIVATE cnn_core)
+add_test(NAME ModelTest COMMAND test_model)
+
 # Additional tests can be added later
 # add_executable(test_layers tests/test_layers.cpp)
 # target_link_libraries(test_layers PRIVATE cnn_core)

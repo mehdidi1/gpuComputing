@@ -75,6 +75,12 @@ public:
      * @param bias - Bias vector
      */
     void set_bias(const std::vector<float>& bias);
+
+    /**
+     * Accessors for serialization
+     */
+    const Tensor& get_weights() const { return weights_; }
+    const std::vector<float>& get_bias() const { return bias_; }
     
 private:
     int in_features_;
@@ -137,6 +143,12 @@ public:
      * Set biases on GPU
      */
     void set_bias(const std::vector<float>& bias);
+
+    /**
+     * Accessors for serialization
+     */
+    const Tensor& get_weights() const { return weights_; }
+    const std::vector<float>& get_bias() const { return bias_; }
     
 private:
     int in_features_;
