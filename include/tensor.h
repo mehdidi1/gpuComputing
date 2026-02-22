@@ -57,13 +57,13 @@ public:
      */
     ~Tensor();
     
-    // Prevent copying by default (implement copy constructor if needed)
+    // Prevent copying by default 
     Tensor(const Tensor&) = delete;
     Tensor& operator=(const Tensor&) = delete;
 
-     // Allow move semantics (efficient transfer of ownership)
-    Tensor(Tensor&& other) noexcept = default;
-    Tensor& operator=(Tensor&& other) noexcept = default;
+     // Custom move semantics (handle GPU pointer)
+    Tensor(Tensor&& other) noexcept;
+    Tensor& operator=(Tensor&& other) noexcept;
     
     // ========================================================================
     // DIMENSION ACCESSORS
@@ -143,6 +143,46 @@ public:
 
     Tensor clone() const;
     
+    // ========================================================================
+    // GPU OPERATIONS
+    // ========================================================================
+    
+    /**
+     * Check if tensor data is on GPU
+     */
+    bool is_on_gpu() const { return gpu_data_ != nullptr; }
+    
+    /**
+     * Get GPU data pointer (returns nullptr if not on GPU)
+     */
+    float* gpu_data() { return gpu_data_; }
+    const float* gpu_data() const { return gpu_data_; }
+    
+    /**
+     * Move tensor data to GPU (allocates GPU memory and copies)
+     */
+    void to_gpu();
+    
+    /**
+     * Move tensor data back to CPU (copies from GPU and frees GPU memory)
+     */
+    void to_cpu();
+    
+    /**
+     * Allocate GPU memory without copying (for output tensors)
+     */
+    void allocate_gpu();
+    
+    /**
+     * Copy data from GPU to CPU without freeing GPU memory
+     */
+    void sync_to_cpu();
+    
+    /**
+     * Free GPU memory
+     */
+    void free_gpu();
+    
 private:
     // ========================================================================
     // PRIVATE MEMBERS
@@ -150,6 +190,7 @@ private:
     
     std::vector<int> dims_;        // Stores dimensions [batch, channels, height, width]
     int total_size_;               // Cached total number of elements
-    std::unique_ptr<float[]> data_; // Underlying data storage
+    std::unique_ptr<float[]> data_; // Underlying CPU data storage
+    float* gpu_data_;              // GPU data pointer (nullptr if not on GPU)
 
 };

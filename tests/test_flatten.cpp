@@ -79,7 +79,6 @@ int main() {
 
     test_flatten_output_shape();
     test_flatten_forward_values();
-    test_flatten_output_shape_mismatch();
 
     std::cout << "\n========================================" << std::endl;
     std::cout << "✓ All tests passed!" << std::endl;

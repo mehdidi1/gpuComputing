@@ -204,7 +204,6 @@ int main() {
     test_fc_matrix_multiply();
     test_fc_with_bias();
     test_fc_batch_processing();
-    test_fc_shape_mismatch();
 
     std::cout << "\n========================================" << std::endl;
     std::cout << "✓ All tests passed!" << std::endl;

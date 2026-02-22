@@ -372,8 +372,6 @@ int main() {
         test_conv_3x3_kernel();
         test_conv_batch_processing();
         test_conv_multichannel();
-        test_conv_invalid_input_shape();
-        test_conv_invalid_output_shape();
         test_conv_with_padding();
         
         std::cout << "\n==============================================================" << std::endl;

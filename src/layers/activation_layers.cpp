@@ -5,6 +5,9 @@
 #include <stdexcept>
 #include <limits>
 
+// Forward declaration of GPU function
+extern void relu_forward_gpu(const float* d_input, float* d_output, int size);
+
 // =========================
 // ReLULayer
 // =========================
@@ -12,18 +15,19 @@
 ReLULayer::ReLULayer() = default;
 
 void ReLULayer::forward(const Tensor& input, Tensor& output) {
-    // On suppose que output a déjà la même shape que input (alloué par le framework)
-    // Sinon, il faut que ton code crée output avec les bons constructeurs Tensor.
-
-    /*if (input.ndims() != output.ndims() ||
-        input.size()  != output.size()  ||
-        input.batch() != output.batch() ||
-        input.channels() != output.channels() ||
-        input.height() != output.height() ||
-        input.width()  != output.width()) {
-        throw std::runtime_error("ReLULayer::forward: output shape mismatch");
-    }*/
-
+    // Check if input is on GPU - if so, use GPU path
+    if (input.is_on_gpu()) {
+        // Allocate output on GPU if needed
+        if (!output.is_on_gpu()) {
+            output.allocate_gpu();
+        }
+        
+        // Call GPU kernel
+        relu_forward_gpu(input.gpu_data(), output.gpu_data(), input.size());
+        return;
+    }
+    
+    // CPU path (original implementation)
     if (input.ndims() == 2) {
         const int N = input.batch();
         const int F = input.channels(); // features (dims_[1])
@@ -76,16 +80,6 @@ float sigmoid_stable(float x){
     }
 }
 void SigmoidLayer::forward(const Tensor& input, Tensor& output) {
-    /*if (input.ndims() != output.ndims() ||
-        input.size()  != output.size()  ||
-        input.batch() != output.batch() ||
-        input.channels() != output.channels() ||
-        input.height() != output.height() ||
-        input.width()  != output.width()) {
-        throw std::runtime_error("SigmoidLayer::forward: output shape mismatch");
-    }*/
-
-
     if (input.ndims() == 2) {
         const int N = input.batch();
         const int F = input.channels();
@@ -130,15 +124,6 @@ std::vector<int> SigmoidLayer::get_output_shape(const std::vector<int>& input_sh
 TanhLayer::TanhLayer() = default;
 
 void TanhLayer::forward(const Tensor& input, Tensor& output) {
-    if (input.ndims() != output.ndims() ||
-        input.size()  != output.size()  ||
-        input.batch() != output.batch() ||
-        input.channels() != output.channels() ||
-        input.height() != output.height() ||
-        input.width()  != output.width()) {
-        throw std::runtime_error("TanhLayer::forward: output shape mismatch");
-    }
-
     if (input.ndims() == 2) {
         const int N = input.batch();
         const int F = input.channels();
@@ -167,8 +152,6 @@ void TanhLayer::forward(const Tensor& input, Tensor& output) {
         }
         return;
     }
-
-    throw std::runtime_error("TanhLayer::forward: unsupported input ndims (only 2 or 4)");
 }
 
 std::vector<int> TanhLayer::get_output_shape(const std::vector<int>& input_shape) const {
@@ -186,15 +169,6 @@ void SoftmaxLayer::forward(const Tensor& input, Tensor& output) {
     // Ici on implémente softmax 2D: [batch, features/classes]
     // C’est le cas standard pour la classification.
 
-    /*if (input.ndims() != 2) {
-        throw std::runtime_error("SoftmaxLayer::forward: input must be 2D [batch, features]");
-    }
-
-    if (output.ndims() != 2 ||
-        output.batch() != input.batch() ||
-        output.channels() != input.channels()) {
-        throw std::runtime_error("SoftmaxLayer::forward: output shape mismatch");
-    }*/
 
     const int N = input.batch();
     const int C = input.channels(); // features/classes
@@ -227,9 +201,6 @@ void SoftmaxLayer::forward(const Tensor& input, Tensor& output) {
 }
 
 std::vector<int> SoftmaxLayer::get_output_shape(const std::vector<int>& input_shape) const {
-    if (input_shape.size() != 2) {
-        throw std::runtime_error("SoftmaxLayer expects 2D input [batch, features]");
-    }
     return input_shape;
 }
 

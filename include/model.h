@@ -13,15 +13,6 @@
  * 
  * Holds a sequence of layers and orchestrates the forward pass
  * 
- * Usage example:
- *   Model model;
- *   model.add_layer(std::make_unique<ConvolutionLayerCPU>(...));
- *   model.add_layer(std::make_unique<ReLULayer>());
- *   model.add_layer(std::make_unique<MaxPoolingLayer>(...));
- *   // ... more layers
- *   
- *   Tensor output = model.forward(input);
- * 
  */
 class Model {
 public:

@@ -10,9 +10,7 @@
  * ============================================================================
  * 
  * Implements convolution operation on CPU using explicit loops.
- * 
- * Mathematical operation (without padding/stride for simplicity):
- *     output[b,k,h,w] = sum over spatial window (kernel[k] * input[b,:,h:h+kh,w:w+kw] + bias[k])
+
  * 
  * Parameters:
  * - num_filters: Number of output channels (kernels)

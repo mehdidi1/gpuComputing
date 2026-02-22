@@ -6,6 +6,13 @@
 #include <algorithm>
 #include <cmath>
 
+// Forward declaration of GPU function
+void maxpool_forward_gpu(
+    const float* d_input, float* d_output,
+    int B, int C, int in_h, int in_w,
+    int out_h, int out_w,
+    int pool_h, int pool_w, int stride);
+
 // ============================================================================
 // MaxPooling Layer
 // ============================================================================
@@ -28,6 +35,23 @@ void MaxPoolingLayer::forward(const Tensor& input, Tensor& output)
     const int out_h = (H - pool_size_) / stride_ + 1;
     const int out_w = (W - pool_size_) / stride_ + 1;
 
+    // Check if input is on GPU - if so, use GPU path
+    if (input.is_on_gpu()) {
+        // Allocate output on GPU if needed
+        if (!output.is_on_gpu()) {
+            output.allocate_gpu();
+        }
+        
+        // Call GPU kernel
+        maxpool_forward_gpu(
+            input.gpu_data(), output.gpu_data(),
+            B, C, H, W, out_h, out_w,
+            pool_size_, pool_size_, stride_
+        );
+        return;
+    }
+
+    // CPU path (original implementation)
     for (int b = 0; b < B; ++b) {
         for (int c = 0; c < C; ++c) {
             for (int oh = 0; oh < out_h; ++oh) {
@@ -50,9 +74,6 @@ void MaxPoolingLayer::forward(const Tensor& input, Tensor& output)
 
 std::vector<int> MaxPoolingLayer::get_output_shape(const std::vector<int>& input_shape) const
 {
-    if (input_shape.size() != 4) {
-        throw std::runtime_error("MaxPoolingLayer expects 4D input");
-    }
     const int B = input_shape[0];
     const int C = input_shape[1];
     const int H = input_shape[2];
@@ -108,9 +129,6 @@ void AvgPoolingLayer::forward(const Tensor& input, Tensor& output)
 
 std::vector<int> AvgPoolingLayer::get_output_shape(const std::vector<int>& input_shape) const
 {
-    if (input_shape.size() != 4) {
-        throw std::runtime_error("AvgPoolingLayer expects 4D input");
-    }
     const int B = input_shape[0];
     const int C = input_shape[1];
     const int H = input_shape[2];

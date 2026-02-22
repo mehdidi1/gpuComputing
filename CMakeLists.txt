@@ -46,6 +46,9 @@ add_library(cnn_core SHARED
     
     # GPU layer implementations (CUDA)
     src/layers/gpu/conv_layer.cu
+    src/layers/gpu/activation_gpu.cu
+    src/layers/gpu/pooling_gpu.cu
+    src/layers/gpu/fc_layer.cu
     
     # Model orchestration
     src/model.cpp
@@ -145,10 +148,24 @@ add_executable(test_conv tests/test_conv.cpp)
 target_link_libraries(test_conv PRIVATE cnn_core)
 add_test(NAME ConvolutionTest COMMAND test_conv)
 
+# CPU vs GPU convolution comparison tests
+add_executable(test_conv_gpu tests/test_conv_gpu.cpp)
+target_link_libraries(test_conv_gpu PRIVATE cnn_core)
+add_test(NAME ConvolutionGpuTest COMMAND test_conv_gpu)
+
 # Model unit tests
 add_executable(test_model tests/test_model.cpp)
 target_link_libraries(test_model PRIVATE cnn_core)
 add_test(NAME ModelTest COMMAND test_model)
+
+# CPU vs GPU model comparison (uses GPU conv + CPU FC)
+add_executable(test_model_compare tests/test_model_compare.cpp)
+target_link_libraries(test_model_compare PRIVATE cnn_core)
+add_test(NAME ModelCompareTest COMMAND test_model_compare)
+
+# Layer-wise timing profiler
+add_executable(test_layer_timing tests/test_layer_timing.cpp)
+target_link_libraries(test_layer_timing PRIVATE cnn_core)
 
 # Additional tests can be added later
 # add_executable(test_layers tests/test_layers.cpp)

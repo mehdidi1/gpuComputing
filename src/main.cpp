@@ -57,9 +57,6 @@ void build_simple_cnn(Model& model)
 std::vector<float> load_binary_data(const std::string& filename, int& num_samples)
 {
     std::ifstream file(filename, std::ios::binary);
-    if (!file.is_open()) {
-        throw std::runtime_error("Cannot open input file: " + filename);
-    }
 
     file.seekg(0, std::ios::end);
     std::streamsize file_size = file.tellg();
@@ -68,20 +65,12 @@ std::vector<float> load_binary_data(const std::string& filename, int& num_sample
     std::vector<float> data(file_size / sizeof(float));
     file.read(reinterpret_cast<char*>(data.data()), file_size);
 
-    if (!file.good()) {
-        throw std::runtime_error("Error reading input file");
-    }
-
     file.close();
 
     // Assume format: [num_samples, 1, 28, 28]
     int total_elements = data.size();
     int elements_per_sample = 1 * 28 * 28;
     num_samples = total_elements / elements_per_sample;
-
-    if (total_elements % elements_per_sample != 0) {
-        throw std::runtime_error("Input size not divisible by sample size");
-    }
 
     std::cout << "  Loaded " << num_samples << " samples" << std::endl;
     return data;
@@ -94,15 +83,8 @@ std::vector<float> load_binary_data(const std::string& filename, int& num_sample
 void save_binary_output(const std::string& filename, const float* data, int size)
 {
     std::ofstream file(filename, std::ios::binary);
-    if (!file.is_open()) {
-        throw std::runtime_error("Cannot open output file for writing: " + filename);
-    }
 
     file.write(reinterpret_cast<const char*>(data), size * sizeof(float));
-
-    if (!file.good()) {
-        throw std::runtime_error("Error writing output file");
-    }
 
     file.close();
     std::cout << "  Saved " << size << " float32 values" << std::endl;

@@ -1,2 +1,0 @@
-A REVOIR 
-1) SoftmaxLayer foward activation layer(vers la fin de la fonction)

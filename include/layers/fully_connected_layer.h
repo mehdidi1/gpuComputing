@@ -6,7 +6,7 @@
 
 /**
  * ============================================================================
- * Fully Connected Layer (Dense Layer)
+ * Fully Connected Layer 
  * ============================================================================
  * 
  * Linear transformation: output = input @ weights + bias
@@ -16,9 +16,7 @@
  * Weights shape: [in_features, out_features] (or transposed, depending on convention)
  * Bias shape: [out_features]
  * Output shape: [batch, out_features]
- * 
- * Computation:
- *   output[b,f] = sum_i (input[b,i] * weights[i,f]) + bias[f]
+
  */
 class FullyConnectedLayer : public ILayer {
 public:
@@ -84,7 +82,6 @@ private:
  * 
  * Same interface as CPU version but uses GPU acceleration
  * 
- * TODO: Implement using cuBLAS for efficient matrix multiplication
  */
 class FullyConnectedLayerGPU : public ILayer {
 public:
@@ -101,20 +98,6 @@ public:
     /**
      * Forward pass on GPU
      * 
-     * TODO:
-     * 1. Transfer input to GPU if needed
-     * 2. Use cuBLAS for matrix multiply: C = alpha*A*B + beta*C
-     *    where A = input [batch, in_features]
-     *          B = weights [in_features, out_features]
-     *          C = output [batch, out_features]
-     * 3. Add bias to each row of output
-     * 4. Transfer output back to CPU if needed
-     * 
-     * cuBLAS call would be:
-     * cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N,
-     *             out_features, batch, in_features,
-     *             &alpha, d_weights, ..., d_input, ...,
-     *             &beta, d_output, ...);
      */
     void forward(const Tensor& input, Tensor& output) override;
     

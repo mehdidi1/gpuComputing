@@ -10,19 +10,6 @@
  * ============================================================================
  * 
  * Implements convolution operation on GPU using CUDA kernels for parallelization.
- * 
- * This should perform the SAME computation as ConvolutionLayerCPU, but parallelized:
- * - Each thread block handles a portion of output feature maps
- * - Each thread computes one or more output elements
- * 
- * Parallelization strategy:
- * - Use grid/block structure to map 2D output space to thread blocks
- * - Each thread computes one output element's convolution
- * - Use shared memory if needed for kernel caching
- * 
- * TODO: Implement CUDA kernels and wrapper functions
- * 
- * Performance: Fast, should be 10-100x faster than CPU version depending on GPU
  */
 class ConvolutionLayerGPU : public ILayer {
 public:
@@ -44,16 +31,6 @@ public:
     /**
      * Forward pass: Apply convolution on GPU
      * 
-     * TODO: Implement GPU-accelerated convolution
-     * Steps:
-     * 1. Copy input tensor data to GPU memory (if not already there)
-     * 2. Copy kernel and bias to GPU memory (if not already there)
-     * 3. Launch CUDA kernel:
-     *    __global__ void conv2d_kernel(const float* input, const float* kernels,
-     *                                  const float* bias, float* output, ...)
-     * 4. Synchronize and copy output back to CPU (or keep on GPU)
-     * 5. Handle memory allocation/deallocation
-     * 
      * @param input - Input tensor [batch, in_channels, height, width]
      * @param output - Output tensor [batch, num_filters, out_h, out_w]
      */
@@ -67,18 +44,13 @@ public:
     /**
      * Set weights on GPU
      * 
-     * TODO: Copy kernel data to GPU device memory
-     * Store GPU pointer for use in forward pass
-     * 
+
      * @param kernels - CPU tensor with kernel data
      */
     void set_weights(const Tensor& kernels);
     
     /**
      * Set biases on GPU
-     * 
-     * TODO: Copy bias data to GPU device memory
-     * Store GPU pointer for use in forward pass
      * 
      * @param bias - CPU vector with bias data
      */
@@ -99,8 +71,8 @@ private:
     int in_channels_;
     
     // GPU device pointers
-    float* d_kernels_;      // TODO: Allocate with cudaMalloc
-    float* d_bias_;         // TODO: Allocate with cudaMalloc
+    float* d_kernels_;      
+    float* d_bias_;         
     
     // CPU backup (for reference or re-use)
     Tensor kernels_;
