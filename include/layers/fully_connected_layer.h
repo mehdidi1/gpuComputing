@@ -132,3 +132,13 @@ private:
     Tensor weights_;     // CPU backup
     std::vector<float> bias_;
 };
+
+// GPU kernel declarations
+void fc_forward_gpu(
+    const float* d_input,
+    const float* d_weights,
+    const float* d_bias,
+    float* d_output,
+    int batch_size,
+    int in_features,
+    int out_features);

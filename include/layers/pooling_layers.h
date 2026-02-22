@@ -91,3 +91,10 @@ private:
     int pool_size_;
     int stride_;
 };
+
+// GPU kernel declarations
+void maxpool_forward_gpu(
+    const float* d_input,
+    float* d_output,
+    int batch, int channels, int height, int width,
+    int pool_size, int stride);

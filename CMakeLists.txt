@@ -163,9 +163,13 @@ add_executable(test_model_compare tests/test_model_compare.cpp)
 target_link_libraries(test_model_compare PRIVATE cnn_core)
 add_test(NAME ModelCompareTest COMMAND test_model_compare)
 
-# Layer-wise timing profiler
+# Layer-wise timing profiler (GPU)
 add_executable(test_layer_timing tests/test_layer_timing.cpp)
 target_link_libraries(test_layer_timing PRIVATE cnn_core)
+
+# CPU timing profiler
+add_executable(test_cpu_timing tests/test_cpu_timing.cpp)
+target_link_libraries(test_cpu_timing PRIVATE cnn_core)
 
 # Additional tests can be added later
 # add_executable(test_layers tests/test_layers.cpp)

@@ -65,7 +65,7 @@ void FullyConnectedLayer::set_bias(const std::vector<float> &bias) {
 // ============================================================================
 
 // Forward declaration of GPU kernel
-extern "C" void fc_forward_gpu(
+void fc_forward_gpu(
     const float* d_input,
     const float* d_weights,
     const float* d_bias,

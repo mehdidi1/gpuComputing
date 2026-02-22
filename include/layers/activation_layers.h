@@ -63,3 +63,6 @@ public:
     void forward(const Tensor& input, Tensor& output) override;
     std::vector<int> get_output_shape(const std::vector<int>& input_shape) const override;
 };
+
+// GPU kernel declarations
+void relu_forward_gpu(const float* d_input, float* d_output, int size);

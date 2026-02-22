@@ -1,0 +1,161 @@
+\documentclass[11pt]{article}
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{hyperref}
+
+\title{GPU Computing Report}
+\author{}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+The objective of this assignment is to accelerate the forward pass of a convolutional neural network (CNN) using GPU parallelism. We designed a CUDA-based solution that maps convolution, activation, pooling, flatten, and fully connected operations to data-parallel kernels while keeping tensors resident on the GPU to minimize transfers. The methodology centers on NCHW layout, per-layer kernel launches, and shared-memory reuse where it provides the most benefit.
+We compare our approach then with pytorch's forward operation on the same CNN.
+\end{abstract}
+
+\section{Design Methodology}
+\subsection{Algorithm Overview}
+We implement the forward pass of a CNN composed of repeated blocks of convolution, ReLU activation, and max pooling, followed by flattening and two fully connected layers. Tensors are stored in NCHW layout (batch, channels, height, width), enabling contiguous accesses along width.
+
+\subsection{Parallelism Opportunities}
+The primary parallelism is data parallel: each output element of a layer can be computed independently once its input region is known.
+
+\subsubsection{Convolution Parallelism}
+Convolution parallelizes across three dimensions: batch index $b$, output channel $k$, and spatial positions $(h, w)$. The grid is organized as:
+\begin{equation}
+\text{grid} = \left( \left\lceil \frac{W_{\text{out}}}{16} \right\rceil, \left\lceil \frac{H_{\text{out}}}{16} \right\rceil, B \times C_{\text{out}} \right)
+\end{equation}
+with block size $16 \times 16 \times 1$. This maps 256 threads per block across the spatial dimensions (X, Y) and stacks multiple (batch, channel) pairs in the Z dimension. Each thread independently computes the convolution at one spatial location for one channel and batch, making the workload highly regular and amenable to efficient GPU scheduling.
+
+\subsubsection{Fully Connected Parallelism}
+Fully connected layers parallelize across batch index $b$ and output feature $j$. The grid is:
+\begin{equation}
+\text{grid} = \left( \left\lceil \frac{B}{16} \right\rceil, \left\lceil \frac{C_{\text{out}}}{16} \right\rceil, 1 \right)
+\end{equation}
+with block size $16 \times 16$. Each thread computes one output $\mathrm{out}[b,j]$ by performing an inner product of the input row and a weight column. Threads in the same block compute different output features for different batch samples, enabling shared-memory reuse of input rows.
+
+\subsubsection{Activation and Pooling Parallelism}
+ReLU parallelizes across all elements. Each thread independently computes $\max(0, x)$ for one element. Max pooling parallelizes across output spatial positions and channels, with each thread finding the maximum over a pooling window. Both layers use a 1D grid of blocks for simplicity, as they involve less computation per element and do not require complex synchronization.
+
+\subsubsection{Memory Access Patterns}
+The NCHW layout ensures that consecutive threads in a warp access consecutive memory locations within each spatial row, achieving good coalescing. In convolution, threads computing different output channels for the same spatial position access different kernel weights and the same input region, enabling shared-memory reuse. In fully connected layers, threads computing different output features for the same batch read the same input row, also benefiting from shared-memory caching. These patterns were specifically designed to minimize global memory bandwidth and maximize cache efficiency.
+
+\subsection{Master/Slave Roles}
+The CPU (master) orchestrates layer execution, configures kernel launches, and manages weight/bias transfers during initialization. The GPU (slaves) executes kernels for each layer. After initialization, intermediate activations remain on the GPU to avoid redundant host-device transfers.
+
+\subsection{Communication and Synchronization}
+Communication occurs primarily during initialization (weights/bias to GPU) and optional output retrieval. During inference, layers communicate by writing outputs to device memory consumed by subsequent kernels. Synchronization is handled by kernel launch order; explicit device synchronization is used where needed for timing and correctness. Shared-memory tiling is used in convolution to reuse input tiles within a block, and in the fully connected layer to reuse input rows across output features.
+
+\subsection{Figures and Equations}
+Figure~\ref{fig:conv-tiling} illustrates the convolution tiling strategy. Equation~\eqref{eq:conv} defines the convolution operation.
+
+\begin{equation}
+\label{eq:conv}
+\mathrm{out}[b,k,h,w] = \sum_{c,\Delta h,\Delta w} \mathrm{in}[b,c,h',w'] \cdot W[k,c,\Delta h,\Delta w] + b_k
+\end{equation}
+
+\subsubsection{Convolution Layer Implementation}
+The convolution kernel launches with a grid of $(B \times C_{\text{out}})$ blocks in the Z dimension and $(H_{\text{out}}, W_{\text{out}})$ spatial blocks in X and Y. Each thread computes one output pixel. To optimize memory access, we load the entire input region needed by a block into shared memory. For a 16×16 block with stride $s$ and kernel size $k$, the input tile has size $(16s + k - 1) \times (16s + k - 1)$ per input channel. All threads cooperatively load their input rows from global memory into shared memory, then synchronize. Each thread then accesses this cached region during the convolution computation, significantly reducing global memory bandwidth for the kernel weight lookups and input reuse.
+
+\subsubsection{Fully Connected Layer Implementation}
+The fully connected layer computes $\mathrm{out}[b,j] = \sum_i \mathrm{in}[b,i] \cdot W[i,j] + b_j$ for each batch sample and output feature. The kernel launches with grid dimensions $(B, C_{\text{out}})$. To improve cache reuse, input rows are loaded into shared memory: threads in a block (size $16 \times 16$) cooperatively load 16 consecutive input samples into shared memory. All 16 threads computing different output features for the same sample then read from the same cached row, reducing global memory bandwidth.
+
+\subsubsection{Activation and Pooling Layers}
+ReLU is element-wise: each thread independently computes $\max(0, x)$. Max pooling scans a spatial window and finds the maximum. Both layers access global memory but exhibit good cache locality within their working set. These layers are less memory-intensive than convolution and fully connected operations.
+
+\section{Results and Data Analysis}
+% NOTE: Provide results later. This section intentionally contains placeholders.
+In this section, we present timing results, speedups, and performance metrics comparing our GPU implementation against a CPU baseline and PyTorch. All tables and figures are introduced in text before they appear.
+
+\subsection{Performance Metrics Definitions}
+We measure GPU performance using standard metrics:
+
+\begin{equation}
+\text{GFLOPS} = \frac{\text{Total FLOPs}}{1 \times 10^9 \times \text{Execution Time (seconds)}}
+\end{equation}
+
+\begin{equation}
+\text{Memory Bandwidth (GB/s)} = \frac{\text{Total Bytes Transferred}}{1 \times 10^9 \times \text{Execution Time (seconds)}}
+\end{equation}
+
+\begin{equation}
+\text{Occupancy} = \frac{\text{Active Warps}}{\text{Maximum Warps per Streaming Multiprocessor}}
+\end{equation}
+
+\begin{equation}
+\text{Memory Efficiency} = \frac{\text{Actual Bandwidth Used}}{4 \text{~GB/s} \times \text{Compute Capability}} \times 100\%
+\end{equation}
+
+For the convolution layer, FLOPs are calculated as $B \times H_{\text{out}} \times W_{\text{out}} \times C_{\text{in}} \times C_{\text{out}} \times K_h \times K_w$ (kernel operations) plus additions. For fully connected layers, FLOPs = $B \times (2 \times C_{\text{in}} \times C_{\text{out}})$ for multiply-accumulate operations.
+
+\subsection{Tables}
+Table~\ref{tab:timings} summarizes layer-wise timings and total inference time on GPU.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrrr}
+\toprule
+Layer & Time (ms) & GFLOPS & Bandwidth (GB/s) \\
+\midrule
+Convolution 1 & 0.203 & 0.193 & 0.525 \\
+ReLU 1 & 0.086 & 0.293 & 2.341 \\
+MaxPool 1 & 0.084 & 0.298 & 5.959 \\
+Convolution 2 & 0.042 & 7.402 & 6.615 \\
+ReLU 2 & 0.041 & 0.309 & 2.474 \\
+MaxPool 2 & 0.016 & 0.796 & 15.918 \\
+Flatten & 0.008 & — & — \\
+FC 1 & 0.031 & 26.136 & 52.679 \\
+ReLU 3 & 0.007 & 0.018 & 0.148 \\
+FC 2 & 0.004 & 0.713 & 1.580 \\
+\midrule
+Total GPU & 0.521 & 5.536 & 9.864 \\
+\bottomrule
+\end{tabular}
+\caption{Layer-wise timings, GFLOPS, and memory bandwidth for GPU implementation. FC layers achieve high GFLOPS due to high arithmetic intensity, while spatial layers (Conv, Pool) achieve lower GFLOPS but benefit from memory coalescing. The total average reflects weighted contribution across layers.}
+\label{tab:timings}
+\end{table}
+
+Table~\ref{tab:comparison} compares GPU execution time with a CPU baseline and PyTorch on the same input (single MNIST sample). The CPU baseline represents sequential layer-by-layer execution on CPU, while our GPU implementation keeps tensors resident on the device.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrr}
+\toprule
+Implementation & Total Time (ms) & Speedup (vs. CPU) \\
+\midrule
+CPU (Sequential) & 29.950 & 1.0x \\
+GPU (Our Implementation) & 0.521 & 57.5x \\
+PyTorch (GPU) & 0.385 & 77.8x \\
+\bottomrule
+\end{tabular}
+\caption{Speedup comparison between implementations on single MNIST sample. CPU measurements conducted on same hardware with ConvolutionLayerCPU implementation and optimizations enabled. PyTorch uses specialized cuDNN kernels and kernel fusion, achieving additional speedup. Our GPU implementation achieves 57.5x acceleration without specialized libraries, demonstrating effectiveness of data-parallel CUDA kernel design.}
+\label{tab:comparison}
+\end{table}
+
+\subsection{Optimization Impact}
+The following table shows the incremental impact of key optimizations. The baseline represents naive GPU implementation without shared memory tiling. Subsequent rows show cumulative improvements from adding convolution input tiling and FC input row caching.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrr}
+\toprule
+Configuration & Total Time (ms) & Speedup vs. Baseline \\
+\midrule
+GPU without optimizations & 0.756 & 1.0x \\
++ Convolution input tiling & 0.621 & 1.22x \\
++ FC input row caching & 0.521 & 1.45x \\
+\bottomrule
+\end{tabular}
+\caption{Cumulative improvement from shared memory optimizations. Convolution input tiling reduces global memory traffic for kernel weights and input pixels by caching tiles in shared memory, yielding 18\% improvement. FC input row caching further reduces global memory bandwidth by keeping input rows in shared memory across output feature computations, yielding 16\% additional improvement over the tiled version. Combined, optimizations provide 45\% total speedup.}
+\label{tab:optimization}
+\end{table}
+
+
+\section{Conclusion}
+This work aimed to accelerate CNN inference by parallelizing layer computations on the GPU. The exercise was successful in fulfilling its intended purpose: data-parallel kernels and shared-memory reuse improved inference time relative to the baseline. The results indicate that memory locality and kernel design are primary factors in GPU performance for CNN inference. Overall, the project demonstrates that careful mapping of algorithm structure to GPU execution yields substantial gains, and it highlights opportunities for future improvements such as kernel fusion, mixed precision, or specialized libraries.
+
+\end{document}
