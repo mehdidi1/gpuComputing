@@ -1,7 +1,7 @@
 # Fdb version 4
-["pdflatex"] 1771792774.96636 "/home/zarbout/Work/ensimag/3A/gpu/gpuComputing/report.tex" "report.pdf" "report" 1771792775.17352 0
+["pdflatex"] 1771875022.01415 "/home/zarbout/Work/ensimag/3A/gpu/gpuComputing/report.tex" "report.pdf" "report" 1771875022.20778 0
   "/home/zarbout/.texlive/texmf-var/fonts/pk/ljfour/jknappen/ec/tcrm1095.600pk" 1771788957.1821 12644 28e73dade7cc92bd06897a1243f51574 ""
-  "/home/zarbout/Work/ensimag/3A/gpu/gpuComputing/report.tex" 1771792774.58338 11653 d15d0b98a6424ceffa8b945b3d9a4d6f ""
+  "/home/zarbout/Work/ensimag/3A/gpu/gpuComputing/report.tex" 1771875021.64252 12242 f980f5062cd2d1d8b942efd7f69fbd72 ""
   "/usr/share/texmf-dist/fonts/tfm/jknappen/ec/tcrm1095.tfm" 1767555874 1536 02c06700a42be0f5a28664c7273f82e7 ""
   "/usr/share/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex7.tfm" 1767555874 1004 54797486969f23fa377b128694d548df ""
   "/usr/share/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex8.tfm" 1767555874 988 bdf658c3bfc2d96d3c8b02cfc1c94c20 ""
@@ -82,9 +82,9 @@
   "/usr/share/texmf-dist/web2c/texmf.cnf" 1767555874 42087 b0f9697c952c8f5a8eede4134282cb0d ""
   "/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map" 1771779938 30070 2c390b00126b1036e8876b6c3ea4d747 ""
   "/var/lib/texmf/web2c/pdftex/pdflatex.fmt" 1771779919 2008247 73050182a40c971f75a2ca0b129252b9 ""
-  "report.aux" 1771792775.14339 5405 cdaa6dcebc381460695980489eeb64ec "pdflatex"
-  "report.out" 1771792775.14672 3288 274526848359913fdfa4596085403a54 "pdflatex"
-  "report.tex" 1771792774.58338 11653 d15d0b98a6424ceffa8b945b3d9a4d6f ""
+  "report.aux" 1771875022.1792 5759 1a136b22ef248c443e80c8e03b5790d4 "pdflatex"
+  "report.out" 1771875022.1792 3288 274526848359913fdfa4596085403a54 "pdflatex"
+  "report.tex" 1771875021.64252 12242 f980f5062cd2d1d8b942efd7f69fbd72 ""
   (generated)
   "report.aux"
   "report.log"
