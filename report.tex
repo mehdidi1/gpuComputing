@@ -13,7 +13,7 @@
 \maketitle
 
 \begin{abstract}
-The objective of this assignment is to accelerate the forward pass of a convolutional neural network (CNN) using GPU parallelism. We designed a CUDA-based solution that maps convolution, activation, pooling, flatten, and fully connected operations to data-parallel kernels while keeping tensors resident on the GPU to minimize transfers. The methodology centers on NCHW layout, per-layer kernel launches, and shared-memory reuse where it provides the most benefit.
+The objective of this project is to accelerate the forward pass of a convolutional neural network (CNN) using GPU parallelism. We designed a CUDA-based solution that maps convolution, activation, pooling, flatten, and fully connected operations to data-parallel kernels while keeping tensors resident on the GPU to minimize transfers. The methodology centers on NCHW layout, per-layer kernel launches, and shared-memory reuse where it provides the most benefit.
 We compare our approach then with pytorch's forward operation on the same CNN.
 \end{abstract}
 
