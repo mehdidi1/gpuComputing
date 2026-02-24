@@ -161,8 +161,6 @@ Finally, comparing our implementation with PyTorch allowed us to evaluate the pe
 One of the main challenges encountered during this project was the implementation and optimization of the convolution operation using shared memory. Although shared memory provides significantly faster access than global memory it requires careful organization of data and threads.
 This challenge becomes particularly significant when using a stride greater than 1. The stride introduces gaps between the input elements used to compute consecutive output values. As a result, the data required by neighboring threads is no longer contiguous in global memory, which complicates the process of loading data efficiently into shared memory.The impact of these optimizations is shown in Table~\ref{tab:optimization}.
 
-Another difficulty lies in balancing shared memory usage and GPU occupancy. Since shared memory is a limited resource, excessive usage per block can reduce the number of blocks that can run concurrently on a multiprocessor, which may negatively impact overall performance.
-
 Another difficulty lies in the fact that debugging CUDA programs proved to be more challenging than debugging CPU programs due to the massive parallelism and the lack of explicit error messages.
 
 \section{Conclusion}
