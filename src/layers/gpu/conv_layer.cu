@@ -1,217 +1,276 @@
-#include "layers/conv_layer_gpu.h"
-#include <cuda_runtime.h>
+#include "layers/activation_layers.h"
+
+#include <cmath>
+#include <algorithm>
 #include <stdexcept>
-#include <string>
-#include <vector>
+#include <limits>
 
 
-__global__ void conv2d_kernel(
-    const float* __restrict__ input, 
-    const float* __restrict__ kernels,
-    const float* __restrict__ bias,  
-    float* __restrict__ output,        
-    int B, int in_c, int in_h, int in_w,
-    int out_c, int out_h, int out_w,
-    int kernel_h, int kernel_w,
-    int stride, int padding)
-{
-    int w_out = blockIdx.x * blockDim.x + threadIdx.x;
-    int h_out = blockIdx.y * blockDim.y + threadIdx.y;
-    
-    // Z dimension handles both Batch and Output Channels
-    int b = blockIdx.z / out_c;
-    int k = blockIdx.z % out_c;
+extern void relu_forward_gpu(const float* d_input, float* d_output, int size);
 
-    int block_h = blockDim.y;
-    int block_w = blockDim.x;
-    int h_base = blockIdx.y * block_h * stride - padding;
-    int w_base = blockIdx.x * block_w * stride - padding;
-    int tile_h = block_h * stride + kernel_h - 1;
-    int tile_w = block_w * stride + kernel_w - 1;
-    
-    int tid = threadIdx.y * blockDim.x + threadIdx.x;
-    int num_threads = blockDim.x * blockDim.y;
-    int tile_size = tile_h * tile_w;
+// =========================
+// ReLULayer
+// =========================
 
-    // Shared memory for the input (if available)
-    extern __shared__ float smem[];
-    
-    bool use_smem = (blockDim.x * blockDim.y <= 256) && (in_c * tile_h * tile_w <= 6144); 
-    
-    if (use_smem && w_out < out_w && h_out < out_h) {
-        for (int c = 0; c < in_c; ++c) {
-            float* smem_channel = smem + c * tile_size;
-            
-            // Distribute loading across all threads in the block
-            for (int elem_idx = tid; elem_idx < tile_size; elem_idx += num_threads) {
-                int h_tile = elem_idx / tile_w;
-                int w_tile = elem_idx % tile_w;
-                
-                int h_in = h_base + h_tile;
-                int w_in = w_base + w_tile;
-                
-                if (h_in >= 0 && h_in < in_h && w_in >= 0 && w_in < in_w) {
-                    int in_idx = ((b * in_c + c) * in_h + h_in) * in_w + w_in;
-                    smem_channel[elem_idx] = input[in_idx];
-                } else {
-                    smem_channel[elem_idx] = 0.0f;
-                }
-            }
-            __syncthreads();
+
+ReLULayer::ReLULayer() = default;
+
+void ReLULayer::forward(const Tensor& input, Tensor& output) {
+    // Check whether the input tensor is located on the GPU.
+    // If so, use the GPU implementation
+    if (input.is_on_gpu()) {
+        // Ensure that the output tensor is allocated on the GPU.
+        // This avoids invalid memory access and ensures both tensors are on the same device.
+        if (!output.is_on_gpu()) {
+            output.allocate_gpu();
         }
         
-        // Compute convolution using cached input
-        float sum = bias[k];
+        // Launch the GPU kernel to compute ReLU in parallel.
+        relu_forward_gpu(input.gpu_data(), output.gpu_data(), input.size());
+        return;
+    }
+    
+    // CPU implementation (reference implementation).
+    // Case 1: 2D tensor [batch, features]
+    // This format is typically used in fully connected layers.
+    if (input.ndims() == 2) {
+        const int N = input.batch();
+        const int F = input.channels(); // Number of features per sample
 
-        for (int c = 0; c < in_c; ++c) {
-            float* smem_channel = smem + c * tile_size;
-            
-            for (int kh = 0; kh < kernel_h; ++kh) {
-                for (int kw = 0; kw < kernel_w; ++kw) {
-                    int h_tile = threadIdx.y * stride + kh;
-                    int w_tile = threadIdx.x * stride + kw;
-                    
-                    if (h_tile < tile_h && w_tile < tile_w) {
-                        int tile_idx = h_tile * tile_w + w_tile;
-                        int k_idx = ((k * in_c + c) * kernel_h + kh) * kernel_w + kw;
-                        
-                        sum += smem_channel[tile_idx] * kernels[k_idx];
+        for (int b = 0; b < N; ++b) {
+            for (int f = 0; f < F; ++f) {
+                const float x = input(b, f);
+
+                // Apply ReLU activation function: max(0, x)
+                // This introduces non-linearity and helps avoid vanishing gradients.
+                output(b, f) = std::max(0.0f, x);
+            }
+        }
+        return;
+    }
+
+    // Case 2: 4D tensor [batch, channels, height, width]
+    // This format is typically used in convolutional neural networks.
+    if (input.ndims() == 4) {
+        const int B = input.batch();
+        const int C = input.channels();
+        const int H = input.height();
+        const int W = input.width();
+
+        // Iterate over all elements of the tensor
+        for (int b = 0; b < B; ++b) {
+            for (int c = 0; c < C; ++c) {
+                for (int h = 0; h < H; ++h) {
+                    for (int w = 0; w < W; ++w) {
+
+                        const float x = input(b, c, h, w);
+
+                        // Apply ReLU element-wise
+                        output(b, c, h, w) = std::max(0.0f, x);
                     }
                 }
             }
         }
+        return;
+    }
+
+}
+
+// The output shape of ReLU is identical to the input shape.
+// because ReLU is an element-wise operation and does not modify tensor dimensions.
+std::vector<int> ReLULayer::get_output_shape(const std::vector<int>& input_shape) const {
+    return input_shape;
+}
+
+
+// =========================
+// SigmoidLayer
+// =========================
+
+
+SigmoidLayer::SigmoidLayer() = default;
+
+// Numerically stable sigmoid implementation.
+// This avoids overflow when x is very large or very negative.
+float sigmoid_stable(float x){
+
+    // If x is positive, use standard formulation
+    if (x >= 0.0f){
+        return 1.0f / (1.0f + std::exp(-x));
+    }else{
+
+        // If x is negative, rewrite the formula to avoid computing exp(-x),
+        // which could overflow.
+        const float ex = std::exp(x);
+        return ex / (1.0f + ex);
+    }
+}
+
+void SigmoidLayer::forward(const Tensor& input, Tensor& output) {
+
+    // Case 1: 2D tensor [batch, features]
+    if (input.ndims() == 2) {
+        const int N = input.batch();
+        const int F = input.channels();
         
-        // Single write to global memory
-        int out_idx = ((b * out_c + k) * out_h + h_out) * out_w + w_out;
-        output[out_idx] = sum;
-    } else if (w_out < out_w && h_out < out_h) {
-        // Fallback: use global memory (original kernel)
-        float sum = bias[k];
+        // Apply sigmoid activation element-wise
+        for (int b = 0; b < N; ++b) {
+            for (int f = 0; f < F; ++f) {
 
-        for (int c = 0; c < in_c; ++c) {
-            for (int kh = 0; kh < kernel_h; ++kh) {
-                for (int kw = 0; kw < kernel_w; ++kw) {
-                    int h_in = h_out * stride - padding + kh;
-                    int w_in = w_out * stride - padding + kw;
+                // Sigmoid maps values into range (0,1)
+                // Often used for binary classification or gating mechanisms.
+                output(b, f) = sigmoid_stable(input(b, f));
+            }
+        }
+        return;
+    }
 
-                    if (h_in >= 0 && h_in < in_h && w_in >= 0 && w_in < in_w) {
-                        int in_idx = ((b * in_c + c) * in_h + h_in) * in_w + w_in;
-                        int k_idx = ((k * in_c + c) * kernel_h + kh) * kernel_w + kw;
-                        
-                        sum += input[in_idx] * kernels[k_idx];
+    // Case 2: 4D tensor [batch, channels, height, width]
+    if (input.ndims() == 4) {
+        const int B = input.batch();
+        const int C = input.channels();
+        const int H = input.height();
+        const int W = input.width();
+
+        // Apply sigmoid activation to every element
+        for (int b = 0; b < B; ++b) {
+            for (int c = 0; c < C; ++c) {
+                for (int h = 0; h < H; ++h) {
+                    for (int w = 0; w < W; ++w) {
+
+                        output(b, c, h, w) = sigmoid_stable(input(b, c, h, w));
+
                     }
                 }
             }
         }
-        
-        int out_idx = ((b * out_c + k) * out_h + h_out) * out_w + w_out;
-        output[out_idx] = sum;
+        return;
+    }
+
+}
+
+// Sigmoid does not modify tensor shape.
+std::vector<int> SigmoidLayer::get_output_shape(const std::vector<int>& input_shape) const {
+    return input_shape;
+}
+
+
+// =========================
+// TanhLayer
+// =========================
+
+
+TanhLayer::TanhLayer() = default;
+
+void TanhLayer::forward(const Tensor& input, Tensor& output) {
+
+    // Case 1: Fully connected tensor [batch, features]
+    if (input.ndims() == 2) {
+        const int N = input.batch();
+        const int F = input.channels();
+
+        for (int b = 0; b < N; ++b) {
+            for (int f = 0; f < F; ++f) {
+
+                // Apply tanh activation element-wise.
+                // Tanh maps values to range (-1, 1), centered at zero.
+                output(b, f) = std::tanh(input(b, f));
+
+            }
+        }
+        return;
+    }
+
+    // Case 2: Convolutional tensor [batch, channels, height, width]
+    if (input.ndims() == 4) {
+        const int B = input.batch();
+        const int C = input.channels();
+        const int H = input.height();
+        const int W = input.width();
+
+        // Iterate over entire tensor
+        for (int b = 0; b < B; ++b) {
+            for (int c = 0; c < C; ++c) {
+                for (int h = 0; h < H; ++h) {
+                    for (int w = 0; w < W; ++w) {
+
+                        output(b, c, h, w) = std::tanh(input(b, c, h, w));
+
+                    }
+                }
+            }
+        }
+        return;
     }
 }
 
-// ============================================================================
-// ConvolutionLayerGPU Implementation
-// ============================================================================
-
-ConvolutionLayerGPU::ConvolutionLayerGPU(int num_filters, int kernel_h, int kernel_w,
-                                         int stride, int padding, int in_channels)
-    : num_filters_(num_filters),
-      kernel_h_(kernel_h),
-      kernel_w_(kernel_w),
-      stride_(stride),
-      padding_(padding),
-      in_channels_(in_channels),
-      d_kernels_(nullptr),
-      d_bias_(nullptr),
-      kernels_(0, 0, 0, 0),
-      bias_(num_filters, 0.0f)
-{
-
+// Tanh preserves tensor shape.
+std::vector<int> TanhLayer::get_output_shape(const std::vector<int>& input_shape) const {
+    return input_shape;
 }
 
-ConvolutionLayerGPU::~ConvolutionLayerGPU()
-{
-    if (d_kernels_) cudaFree(d_kernels_);
-    if (d_bias_) cudaFree(d_bias_);
-}
 
-void ConvolutionLayerGPU::forward(const Tensor& input, Tensor& output)
-{
-    const auto in_shape = input.get_shape();
-    int B = in_shape[0];
-    int in_h = in_shape[2];
-    int in_w = in_shape[3];
+// =========================
+// SoftmaxLayer
+// =========================
 
-    int out_h = (in_h + 2 * padding_ - kernel_h_) / stride_ + 1;
-    int out_w = (in_w + 2 * padding_ - kernel_w_) / stride_ + 1;
 
-    // Ensure input is on GPU
-    if (!input.is_on_gpu()) {
-        const_cast<Tensor&>(input).to_gpu();
+SoftmaxLayer::SoftmaxLayer() = default;
+
+void SoftmaxLayer::forward(const Tensor& input, Tensor& output) {
+
+    // Here we implement a 2D softmax: [batch, features/classes]
+    // This is the standard case for classification tasks,
+    // where each row corresponds to class scores for one sample.
+
+    const int N = input.batch();
+    const int C = input.channels(); // Number of classes
+
+    for (int b = 0; b < N; ++b) {
+
+        // Step 1: Find the maximum value in the row for numerical stability.
+        // Subtracting the maximum prevents overflow in exp().
+        float maxVal = input(b, 0);
+        for (int f = 1; f < C; ++f) {
+            maxVal = std::max(maxVal, input(b, f));
+        }
+
+        // Step 2: Compute exponentials and accumulate sum.
+        // Temporarily store exp values in output tensor.
+        float sum = 0.0f;
+
+        for (int f = 0; f < C; ++f) {
+
+            const float e = std::exp(input(b, f) - maxVal);
+
+            output(b, f) = e;
+            sum += e;
+
+        }
+
+        // Step 3: Normalize so that probabilities sum to 1.
+        // This converts raw scores (logits) into probabilities.
+        if (sum <= std::numeric_limits<float>::min()) {
+
+            // Fallback to uniform distribution in extreme numerical cases.
+            // This ensures valid output even in unstable conditions.
+            const float uni = 1.0f / static_cast<float>(C);
+
+            for (int f = 0; f < C; ++f)
+                output(b, f) = uni;
+
+        } else {
+
+            const float inv = 1.0f / sum;
+
+            for (int f = 0; f < C; ++f)
+                output(b, f) *= inv;
+
+        }
     }
-    
-    // Ensure output has GPU memory allocated
-    if (!output.is_on_gpu()) {
-        output.allocate_gpu();
-    }
-
-    dim3 block(16, 16, 1); 
-    dim3 grid(
-        (out_w + block.x - 1) / block.x,
-        (out_h + block.y - 1) / block.y,
-        B * num_filters_
-    );
-
-    int tile_h = block.y * stride_ + kernel_h_ - 1;
-    int tile_w = block.x * stride_ + kernel_w_ - 1;
-    size_t smem_bytes = (size_t)in_channels_ * tile_h * tile_w * sizeof(float);
-    
-    // Check if shared memory fits
-    if (smem_bytes > 96 * 1024) {
-        smem_bytes = 0;
-    }
-
-    conv2d_kernel<<<grid, block, smem_bytes>>>(
-        input.gpu_data(), d_kernels_, d_bias_, output.gpu_data(),
-        B, in_channels_, in_h, in_w,
-        num_filters_, out_h, out_w,
-        kernel_h_, kernel_w_, stride_, padding_
-    );
-
-    cudaDeviceSynchronize();
-    
 }
 
-std::vector<int> ConvolutionLayerGPU::get_output_shape(const std::vector<int>& input_shape) const
-{
-    int B = input_shape[0];
-    int H = input_shape[2];
-    int W = input_shape[3];
-    
-    int out_h = (H + 2 * padding_ - kernel_h_) / stride_ + 1;
-    int out_w = (W + 2 * padding_ - kernel_w_) / stride_ + 1;
-    
-    return {B, num_filters_, out_h, out_w};
-}
-
-void ConvolutionLayerGPU::set_weights(const Tensor& kernels)
-{
-    kernels_ = kernels.clone(); // Store CPU backup
-    
-    size_t bytes = num_filters_ * in_channels_ * kernel_h_ * kernel_w_ * sizeof(float);
-    
-    if (d_kernels_) cudaFree(d_kernels_);
-    cudaMalloc(&d_kernels_, bytes);
-    cudaMemcpy(d_kernels_, kernels_.data(), bytes, cudaMemcpyHostToDevice);
-}
-
-void ConvolutionLayerGPU::set_bias(const std::vector<float>& bias)
-{
-    bias_ = bias; // Store CPU backup
-    
-    size_t bytes = num_filters_ * sizeof(float);
-    
-    if (d_bias_) cudaFree(d_bias_);
-    cudaMalloc(&d_bias_, bytes);
-    cudaMemcpy(d_bias_, bias_.data(), bytes, cudaMemcpyHostToDevice);
+// Softmax does not change tensor dimensions.
+std::vector<int> SoftmaxLayer::get_output_shape(const std::vector<int>& input_shape) const {
+    return input_shape;
 }
