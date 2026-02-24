@@ -17,7 +17,6 @@ set(CMAKE_CUDA_ARCHITECTURES native)
 # Dependencies
 find_package(CUDAToolkit REQUIRED)
 
-# Optional: find_package(BLAS REQUIRED)
 
 # CNN Core Library
 
@@ -64,6 +63,3 @@ if(ENABLE_DEBUG)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 endif()
 
-# Installation (optional)
-# install(TARGETS cnn_core cnn_app LIBRARY DESTINATION lib EXECUTABLE DESTINATION bin)
-# install(DIRECTORY include/ DESTINATION include)
