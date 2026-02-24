@@ -119,6 +119,7 @@ Total GPU & 116.798 & 688.351 & 1223.123 \\
 \label{tab:timings}
 \end{table}
 
+\noindent
 Table~\ref{tab:comparison} compares GPU execution time with a CPU baseline and PyTorch on the same input (single MNIST sample). The CPU baseline represents sequential layer-by-layer execution on CPU, while our GPU implementation keeps tensors resident on the device.
 
 \begin{table}[h]
@@ -139,6 +140,39 @@ PyTorch (GPU) & 0.006 & 4900x \\
 \subsection{Optimization Impact}
 The following table shows the incremental impact of key optimizations. The baseline represents naive GPU implementation without shared memory tiling. Subsequent rows show cumulative improvements from adding convolution input tiling and FC input row caching, measured across all 10,000 MNIST test samples.
 
+
+
+
+
+\section{Knowledge and Skills Acquired and Challenges Encountered}
+
+\subsection{Knowledge and Skills Acquired}
+
+This project allowed us to deepen our understanding of GPU programming and more specifically the CUDA programming model. We were able to apply fundamental concepts such as the GPU memory hierarchy, the organization of threads into blocks and grids and the importance of memory access patterns in achieving high performance.
+
+One of the main contributions of this project was gaining a concrete understanding of the differences between CPU and GPU execution.
+
+We also developed a deeper understanding of the internal operations of convolutional neural networks far beyond what we covered in class since the first part of this project focused on learning, understanding, and implementing CNN operations from scratch. Implementing these operations manually provided valuable insight into their computational cost, memory access patterns and potential optimization opportunities
+
+Finally, comparing our implementation with PyTorch allowed us to evaluate the performance gap between a custom implementation and a highly optimized framework. This comparison highlighted the importance of low-level optimizations such as efficient use of shared memory, minimizing global memory accesses and maximizing GPU utilization.
+
+\subsection{Challenges Encountered}
+
+One of the main challenges encountered during this project was the implementation and optimization of the convolution operation using shared memory. Although shared memory provides significantly faster access than global memory it requires careful organization of data and threads.
+This challenge becomes particularly significant when using a stride greater than 1. The stride introduces gaps between the input elements used to compute consecutive output values. As a result, the data required by neighboring threads is no longer contiguous in global memory, which complicates the process of loading data efficiently into shared memory.The impact of these optimizations is shown in Table~\ref{tab:optimization}.
+
+Another difficulty lies in balancing shared memory usage and GPU occupancy. Since shared memory is a limited resource, excessive usage per block can reduce the number of blocks that can run concurrently on a multiprocessor, which may negatively impact overall performance.
+
+Another difficulty lies in the fact that debugging CUDA programs proved to be more challenging than debugging CPU programs due to the massive parallelism and the lack of explicit error messages.
+
+\section{Conclusion}
+This work aimed to accelerate CNN inference by parallelizing layer computations on the GPU. The exercise was highly successful: our data-parallel kernels and shared-memory optimizations achieved 2,473x speedup over CPU baseline, reaching approximately 50\% of PyTorch's performance on the same hardware and dataset. The results indicate that memory locality, kernel design, and minimizing global memory accesses are primary factors in GPU performance for CNN inference. PyTorch's 2x performance advantage stems from years of optimization, cuDNN integration, and advanced kernel fusion techniques as we notice from our investigations. Nonetheless, our implementation demonstrates that hand-tuned CUDA kernels can achieve competitive performance with general-purpose deep learning frameworks. Overall, the project demonstrates that careful mapping of algorithm structure to GPU execution yields substantial gains, and provides valuable insights into the optimization techniques employed by production deep learning frameworks.
+
+
+
+
+\newpage
+
 \begin{table}[h]
 \centering
 \begin{tabular}{lrr}
@@ -154,8 +188,13 @@ GPU without optimizations & 169.4 & 1.0x \\
 \label{tab:optimization}
 \end{table}
 
+\newpage
 
-\section{Conclusion}
-This work aimed to accelerate CNN inference by parallelizing layer computations on the GPU. The exercise was highly successful: our data-parallel kernels and shared-memory optimizations achieved 2,473x speedup over CPU baseline, reaching approximately 50\% of PyTorch's performance on the same hardware and dataset. The results indicate that memory locality, kernel design, and minimizing global memory accesses are primary factors in GPU performance for CNN inference. PyTorch's 2x performance advantage stems from years of optimization, cuDNN integration, and advanced kernel fusion techniques. Nonetheless, our implementation demonstrates that hand-tuned CUDA kernels can achieve competitive performance with general-purpose deep learning frameworks. Overall, the project demonstrates that careful mapping of algorithm structure to GPU execution yields substantial gains, and provides valuable insights into the optimization techniques employed by production deep learning frameworks.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.17\textwidth]{images/model.png}
+    \caption{The CNN based architecture used for experiments}
+    \label{fig:cnn}
+\end{figure}
 
 \end{document}
